@@ -1,0 +1,74 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publier une offre</title>
+    <link rel="stylesheet" href="{% static 'offres/style.css' %}?v=2">
+</head>
+
+<body class="page-publication-offre">
+
+    {% include "offres/partials/notifications.html" %}
+
+    <header class="entete entreprise-header">
+        <a class="logo" href="{% url 'rechercher_offres' %}">
+            Talent<span>Connect</span>
+        </a>
+
+        <nav aria-label="Navigation principale">
+            <a href="{% url 'tableau_bord_entreprise' %}">Mon espace</a>
+
+            <a href="{% url 'publier_offre' %}" class="lien-actif" aria-current="page">
+                Publier une offre
+            </a>
+
+            <a href="{% url 'rechercher_offres' %}">Voir les offres</a>
+
+            <form method="post" action="{% url 'deconnexion' %}">
+                {% csrf_token %}
+                <button type="submit">Déconnexion</button>
+            </form>
+        </nav>
+    </header>
+
+    <main class="publication-page">
+        <section class="publication-container">
+
+            <h1>Publier une offre</h1>
+
+            <p class="publication-description">
+                Présentez votre opportunité et permettez aux étudiants de postuler.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="error-message">
+                        <strong>Impossible de publier cette offre.</strong>
+                        {{ form.errors }}
+                    </div>
+                {% endif %}
+
+                {{ form.as_p }}
+
+                <button type="submit">Publier l'offre</button>
+            </form>
+
+            <a class="publication-back" href="{% url 'tableau_bord_entreprise' %}">
+                ← Retour à mon espace
+            </a>
+
+        </section>
+    </main>
+
+    <footer class="pied-page">
+        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
+    </footer>
+
+</body>
+</html>

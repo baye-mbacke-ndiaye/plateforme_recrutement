@@ -1,0 +1,19 @@
+{% load static %}
+{% if messages %}
+    <div class="notification-stack" aria-live="polite" aria-relevant="additions">
+        {% for message in messages %}
+            <div class="notification message-{{ message.tags }}"
+                 role="{% if 'error' in message.tags %}alert{% else %}status{% endif %}"
+                 data-notification>
+                <span class="notification-text">{{ message }}</span>
+                <button class="notification-close"
+                        type="button"
+                        aria-label="Fermer la notification"
+                        data-notification-close>
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+    <script src="{% static 'offres/notifications.js' %}" defer></script>
+{% endif %}

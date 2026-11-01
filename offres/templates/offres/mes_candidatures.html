@@ -1,0 +1,224 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Consultez et suivez vos candidatures sur TalentConnect.">
+    <title>Mes candidatures | TalentConnect</title>
+    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
+</head>
+
+<body class="page-mes-candidatures">
+
+    <header class="espace-header">
+        <a href="{% url 'rechercher_offres' %}" class="espace-logo">
+            Talent<span>Connect</span>
+        </a>
+
+        <nav class="espace-navigation" aria-label="Navigation principale">
+            <a href="{% url 'rechercher_offres' %}">Accueil</a>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'mes_candidatures' %}" class="lien-actif">
+                    Mes candidatures
+                </a>
+
+                <form method="post" action="{% url 'deconnexion' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bouton-deconnexion">
+                        Déconnexion
+                    </button>
+                </form>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="espace-container">
+
+        {% include "offres/partials/notifications.html" %}
+
+        <section class="notifications-etudiant">
+            <h2>
+                Mes notifications
+                {% if notifications_non_lues > 0 %}
+                    <span class="badge-notifications">
+                        {{ notifications_non_lues }}
+                    </span>
+                {% endif %}
+            </h2>
+
+            {% if notifications %}
+                {% for notification in notifications %}
+                    <article class="notification-etudiant {% if not notification.lu %}notification-non-lue{% endif %}">
+                        <p>{{ notification.message }}</p>
+
+                        <small>
+                            {{ notification.date_creation|date:"d/m/Y à H:i" }}
+                        </small>
+
+                        {% if not notification.lu %}
+                            <form method="post" action="{% url 'marquer_notification_lue' notification.id %}">
+                                {% csrf_token %}
+                                <button type="submit">
+                                    Marquer comme lue
+                                </button>
+                            </form>
+                        {% else %}
+                            <span>✓ Lue</span>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            {% else %}
+                <p>Tu n'as pas encore de notification.</p>
+            {% endif %}
+        </section>
+
+        <section class="espace-introduction">
+            <span class="espace-surtitre">MON ESPACE ÉTUDIANT</span>
+            <h1>Mes candidatures</h1>
+            <p>
+                Suivez vos démarches et consultez l'état de vos candidatures
+                depuis un seul espace.
+            </p>
+        </section>
+
+        <section class="resume-candidatures" aria-label="Résumé des candidatures">
+
+            <div class="resume-carte">
+                <span class="resume-libelle">Total des candidatures</span>
+                <strong>{{ total_candidatures }}</strong>
+                <span class="resume-description">
+                    Candidature(s) enregistrée(s)
+                </span>
+            </div>
+
+            <div class="resume-carte">
+                <span class="resume-libelle">En attente</span>
+                <strong>{{ candidatures_attente }}</strong>
+                <span class="resume-description">
+                    Demande(s) en cours
+                </span>
+            </div>
+
+            <div class="resume-carte">
+                <span class="resume-libelle">Acceptées</span>
+                <strong>{{ candidatures_acceptees }}</strong>
+                <span class="resume-description">
+                    Réponse(s) positive(s)
+                </span>
+            </div>
+
+            <div class="resume-carte">
+                <span class="resume-libelle">Refusées</span>
+                <strong>{{ candidatures_refusees }}</strong>
+                <span class="resume-description">
+                    Demande(s) refusée(s)
+                </span>
+            </div>
+
+        </section>
+
+        <section class="liste-candidatures">
+
+            <div class="liste-entete">
+                <div>
+                    <h2>Suivi de mes demandes</h2>
+                    <p>Retrouvez ici l'historique de vos candidatures.</p>
+                </div>
+            </div>
+
+            {% if candidatures %}
+                <div class="candidatures-grille">
+
+                    {% for candidature in candidatures %}
+                        <article class="candidature-item">
+
+                            <div class="candidature-item-entete">
+                                <span class="candidature-type">
+                                    {{ candidature.offre.get_type_contrat_display }}
+                                </span>
+
+                                {% if candidature.statut == 'en_attente' %}
+                                    <span class="statut-badge statut-attente">
+                                        En attente
+                                    </span>
+                                {% elif candidature.statut == 'acceptee' %}
+                                    <span class="statut-badge statut-acceptee">
+                                        Acceptée
+                                    </span>
+                                {% elif candidature.statut == 'refusee' %}
+                                    <span class="statut-badge statut-refusee">
+                                        Refusée
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <h3>{{ candidature.offre.titre }}</h3>
+
+                            <p class="candidature-entreprise">
+                                {{ candidature.offre.entreprise }}
+                            </p>
+
+                            <div class="candidature-details">
+
+                                <p>
+                                    <strong>Localisation</strong>
+                                    <span>
+                                        {{ candidature.offre.localisation|default:"Non précisée" }}
+                                    </span>
+                                </p>
+
+                                <p>
+                                    <strong>Date de candidature</strong>
+                                    <span>
+                                        {{ candidature.date_candidature|date:"d/m/Y à H:i" }}
+                                    </span>
+                                </p>
+
+                            </div>
+
+                            <div class="candidature-pied">
+                                <a
+                                    href="{% url 'detail_offre' candidature.offre.id %}"
+                                    class="lien-detail-candidature"
+                                >
+                                    Consulter l'offre
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+
+                        </article>
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="candidatures-vides">
+                    <div class="vide-icone" aria-hidden="true">↗</div>
+
+                    <h3>Aucune candidature pour le moment</h3>
+
+                    <p>
+                        Explorez les offres disponibles et envoyez votre première candidature.
+                    </p>
+
+                    <a href="{% url 'rechercher_offres' %}" class="bouton-decouvrir">
+                        Découvrir les offres
+                    </a>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <footer class="espace-footer">
+        <p>© {% now "Y" %} TalentConnect. Tous droits réservés.</p>
+    </footer>
+
+</body>
+</html>

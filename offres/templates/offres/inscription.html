@@ -1,0 +1,90 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un compte | TalentConnect</title>
+    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
+</head>
+
+<body class="page-inscription">
+
+    <header class="entete">
+        <a class="logo" href="{% url 'rechercher_offres' %}">
+            Talent<span>Connect</span>
+        </a>
+        <a class="lien-retour" href="{% url 'connexion' %}">
+            Déjà inscrit ? Se connecter
+        </a>
+    </header>
+
+    {% include "offres/partials/notifications.html" %}
+
+    <main class="zone-inscription">
+        <section class="carte-inscription">
+
+            <div class="logo-icone" aria-hidden="true">T</div>
+
+            <h1>Rejoignez TalentConnect</h1>
+            <p class="texte-intro">
+                Créez votre compte pour découvrir des offres
+                d’emploi, de stage et d’alternance.
+            </p>
+
+            <form method="post" class="formulaire-inscription">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="message-erreur" role="alert">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                {% for field in form %}
+                    <div class="groupe-champ">
+                        {{ field.label_tag }}
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <small class="aide-champ">
+                                {{ field.help_text|safe }}
+                            </small>
+                        {% endif %}
+
+                        {% for error in field.errors %}
+                            <small class="erreur-champ" role="alert">
+                                {{ error }}
+                            </small>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="bouton-principal">
+                    Créer mon compte
+                </button>
+            </form>
+
+            <div class="separateur"></div>
+
+            <p class="texte-inscription">
+                Vous avez déjà un compte ?
+                <a href="{% url 'connexion' %}">Se connecter</a>
+            </p>
+            <p class="texte-inscription texte-inscription-secondaire">
+                Vous recrutez ?
+                <a href="{% url 'inscription_entreprise' %}">
+                    Créer un compte entreprise
+                </a>
+            </p>
+
+        </section>
+    </main>
+
+    <footer class="pied-page">
+        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
+    </footer>
+
+</body>
+</html>

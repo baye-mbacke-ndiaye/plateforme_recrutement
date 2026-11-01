@@ -1,0 +1,111 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion | TalentConnect</title>
+    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
+</head>
+<body class="page-connexion">
+
+    <header class="entete">
+        <a class="logo" href="{% url 'rechercher_offres' %}">
+            Talent<span>Connect</span>
+        </a>
+        <a class="lien-retour" href="{% url 'rechercher_offres' %}">
+            ← Accueil
+        </a>
+    </header>
+
+    <main class="zone-connexion">
+        <section class="carte-connexion">
+            <div class="logo-icone" aria-hidden="true">T</div>
+
+            <h1>Bienvenue !</h1>
+            <p class="texte-intro">
+                Connectez-vous pour retrouver les offres et suivre
+                vos démarches sur TalentConnect.
+            </p>
+
+            {% if form.non_field_errors %}
+                <div class="message-erreur" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="formulaire-connexion">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="groupe-champ">
+                        {{ field.label_tag }}
+
+                        {% if field.field.widget.input_type == "password" %}
+                            <div class="champ-mot-de-passe">
+                                {{ field }}
+                                <button
+                                    type="button"
+                                    class="bouton-afficher"
+                                    aria-pressed="false"
+                                    onclick="basculerMotDePasse(this)">
+                                    Afficher
+                                </button>
+                            </div>
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+
+                        {% for error in field.errors %}
+                            <small class="erreur-champ" role="alert">
+                                {{ error }}
+                            </small>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="bouton-principal">
+                    Se connecter
+                </button>
+            </form>
+
+            <div class="separateur"></div>
+
+            <p class="texte-inscription">
+                Vous n’avez pas encore de compte ?
+                <a href="{% url 'inscription' %}">Créer un compte</a>
+            </p>
+            <p class="texte-inscription texte-inscription-secondaire">
+                Vous recrutez ?
+                <a href="{% url 'inscription_entreprise' %}">
+                    Créer un compte entreprise
+                </a>
+            </p>
+        </section>
+    </main>
+
+    {% include "offres/partials/notifications.html" %}
+
+    <footer class="pied-page">
+        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
+    </footer>
+
+    <script>
+        function basculerMotDePasse(bouton) {
+            const champ = bouton.parentElement.querySelector('input');
+            if (!champ) return;
+
+            const visible = champ.type === 'password';
+            champ.type = visible ? 'text' : 'password';
+            bouton.textContent = visible ? 'Masquer' : 'Afficher';
+            bouton.setAttribute('aria-pressed', String(visible));
+            bouton.setAttribute(
+                'aria-label',
+                visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+            );
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,327 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorez les opportunités</title>
+    <meta name="description" content="Découvrez des offres d'emploi, de stage et d'alternance.">
+    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
+</head>
+
+<body class="recherche-dynamique">
+
+<header class="rd-header">
+    <div class="rd-header-inner">
+
+        <a href="{% url 'rechercher_offres' %}" class="rd-logo">
+            <span class="rd-logo-icon" aria-hidden="true">T</span>
+            <span>Talent<span class="rd-logo-accent">Connect</span></span>
+        </a>
+
+        <nav class="rd-nav">
+            <a href="{% url 'rechercher_offres' %}" class="rd-nav-active">
+                Accueil
+            </a>
+
+            {% if user.is_authenticated %}
+
+                {% if user.profil_entreprise %}
+                    <a href="{% url 'tableau_bord_entreprise' %}">
+                        Mon espace
+                    </a>
+                    <a href="{% url 'publier_offre' %}">
+                        Publier une offre
+                    </a>
+
+                {% elif user.profil_etudiant %}
+                    <a href="{% url 'mes_candidatures' %}">
+                        Mes candidatures
+                    </a>
+                {% endif %}
+
+                <form method="post" action="{% url 'deconnexion' %}" class="rd-nav-logout">
+                    {% csrf_token %}
+                    <button type="submit" class="rd-nav-logout-button">
+                        Déconnexion
+                    </button>
+                </form>
+
+            {% else %}
+                <a href="{% url 'connexion' %}">Connexion</a>
+                <a href="{% url 'inscription' %}" class="rd-nav-button">
+                    Créer un compte
+                </a>
+            {% endif %}
+        </nav>
+
+    </div>
+</header>
+
+{% include "offres/partials/notifications.html" %}
+
+<main>
+    <section class="rd-hero">
+        <div class="rd-hero-inner">
+
+            <div class="rd-hero-content">
+
+                <span class="rd-eyebrow">
+                    <span class="rd-status-dot"></span>
+                    LE DÉBUT DE VOTRE PROCHAINE ÉTAPE
+                </span>
+
+                <h1>
+                    Votre talent mérite<br>
+                    <span>la bonne opportunité.</span>
+                </h1>
+
+                <p>
+                    Découvrez des offres d'emploi, des stages et des alternances
+                    pour construire votre avenir professionnel.
+                </p>
+
+                <form method="get"
+                      action="{% url 'rechercher_offres' %}"
+                      class="rd-search">
+
+                    <span class="rd-search-icon" aria-hidden="true">⌕</span>
+
+                    <input
+                        type="search"
+                        name="q"
+                        placeholder="Ex. développeur web, marketing..."
+                        value="{{ request.GET.q|default:'' }}"
+                        aria-label="Rechercher par métier, entreprise ou mot-clé">
+
+                    <button type="submit">Explorer les offres →</button>
+                </form>
+
+                <div class="rd-tags">
+                    <span>Emploi</span>
+                    <span>Stage</span>
+                    <span>Alternance</span>
+                </div>
+
+                {% if user.is_authenticated %}
+
+                    {% if user.profil_entreprise %}
+                        <div class="actions-entreprise">
+                            <h2>Espace entreprise</h2>
+                            <p>Publiez vos opportunités et trouvez des candidats.</p>
+
+                            <a href="{% url 'publier_offre' %}" class="bouton-publier">
+                                + Publier une offre
+                            </a>
+                        </div>
+
+                    {% elif user.profil_etudiant %}
+                        <div class="actions-candidat">
+                            <h2>Espace candidat</h2>
+                            <p>Découvrez les opportunités et suivez vos candidatures.</p>
+
+                            <a href="{% url 'mes_candidatures' %}" class="bouton-publier">
+                                Mes candidatures
+                            </a>
+                        </div>
+                    {% endif %}
+
+                {% endif %}
+
+            </div>
+
+            <div class="rd-hero-visual" aria-hidden="true">
+
+                <div class="rd-visual-orb rd-orb-one"></div>
+                <div class="rd-visual-orb rd-orb-two"></div>
+
+                <div class="rd-floating-card rd-float-top">
+                    <span class="rd-float-icon">↗</span>
+                    <div>
+                        <strong>Un nouveau départ</strong>
+                        <small>Votre carrière commence ici</small>
+                    </div>
+                </div>
+
+                <div class="rd-visual-panel">
+
+                    <div class="rd-panel-top">
+                        <span class="rd-panel-dot"></span>
+                        <span class="rd-panel-dot"></span>
+                        <span class="rd-panel-dot"></span>
+                    </div>
+
+                    <div class="rd-panel-heading">
+                        <span class="rd-panel-label">OPPORTUNITÉS</span>
+                        <span class="rd-panel-symbol">✦</span>
+                    </div>
+
+                    <div class="rd-panel-line rd-line-long"></div>
+                    <div class="rd-panel-line rd-line-short"></div>
+
+                    <div class="rd-panel-offer">
+                        <div class="rd-mini-icon rd-mini-blue">D</div>
+                        <div class="rd-mini-text">
+                            <strong>Développement web</strong>
+                            <span>Compétences numériques</span>
+                        </div>
+                        <span class="rd-mini-arrow">↗</span>
+                    </div>
+
+                    <div class="rd-panel-offer">
+                        <div class="rd-mini-icon rd-mini-purple">G</div>
+                        <div class="rd-mini-text">
+                            <strong>Graphisme &amp; design</strong>
+                            <span>Créativité et innovation</span>
+                        </div>
+                        <span class="rd-mini-arrow">↗</span>
+                    </div>
+
+                    <div class="rd-panel-offer">
+                        <div class="rd-mini-icon rd-mini-orange">M</div>
+                        <div class="rd-mini-text">
+                            <strong>Marketing digital</strong>
+                            <span>Communication</span>
+                        </div>
+                        <span class="rd-mini-arrow">↗</span>
+                    </div>
+
+                </div>
+
+                <div class="rd-floating-card rd-float-bottom">
+                    <span class="rd-check-icon">✓</span>
+                    <div>
+                        <strong>À vous de jouer !</strong>
+                        <small>Explorez les possibilités</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <section class="rd-offers-section">
+
+        <div class="rd-section-heading">
+
+            <div>
+                <span class="rd-section-eyebrow">À DÉCOUVRIR</span>
+
+                <h2>
+                    {% if request.GET.q %}
+                        Résultats de recherche
+                    {% else %}
+                        Les opportunités du moment
+                    {% endif %}
+                </h2>
+
+                <p>
+                    {% if request.GET.q %}
+                        Résultats pour « {{ request.GET.q }} »
+                    {% else %}
+                        Trouvez une offre qui correspond à vos ambitions.
+                    {% endif %}
+                </p>
+            </div>
+
+            <span class="rd-results-count" aria-live="polite">
+                {{ offres|length }} offre{{ offres|length|pluralize:"s" }}
+            </span>
+
+            {% if request.GET.q %}
+                <a href="{% url 'rechercher_offres' %}" class="rd-reset-link">
+                    Effacer la recherche ↗
+                </a>
+            {% endif %}
+
+        </div>
+
+        <div class="rd-offers-grid">
+
+            {% for offre in offres %}
+
+                <article class="rd-offer-card">
+
+                    <div class="rd-card-top">
+
+                        <div class="rd-company-avatar">
+                            {{ offre.entreprise|first|upper }}
+                        </div>
+
+                        <span class="rd-contract-badge">
+                            {{ offre.get_type_contrat_display }}
+                        </span>
+
+                    </div>
+
+                    <h3>{{ offre.titre }}</h3>
+
+                    <p class="rd-company-name">
+                        {{ offre.entreprise }}
+                    </p>
+
+                    <div class="rd-location">
+                        <span aria-hidden="true">⌖</span>
+                        <span class="rd-location-label">Lieu</span>
+                        {{ offre.localisation|default:"Localisation non précisée" }}
+                    </div>
+
+                    <p class="rd-description">
+                        {{ offre.description|truncatewords:25 }}
+                    </p>
+
+                    <div class="rd-card-footer">
+
+                        <div class="rd-deadline">
+                            <small>Date limite</small>
+                            <strong>
+                                {% if offre.date_limite %}
+                                    {{ offre.date_limite|date:"d/m/Y" }}
+                                {% else %}
+                                    Non précisée
+                                {% endif %}
+                            </strong>
+                        </div>
+
+                        <a href="{% url 'detail_offre' offre.id %}" class="rd-view-button">
+                            Voir l'offre <span aria-hidden="true">→</span>
+                        </a>
+
+                    </div>
+
+                </article>
+
+            {% empty %}
+
+                <div class="rd-empty-state">
+                    <div class="rd-empty-icon">⌕</div>
+                    <h3>Aucune offre trouvée</h3>
+
+                    <p>
+                        Essayez un autre mot-clé pour découvrir de nouvelles possibilités.
+                    </p>
+
+                    {% if request.GET.q %}
+                        <a href="{% url 'rechercher_offres' %}" class="rd-view-button">
+                            Afficher toutes les offres →
+                        </a>
+                    {% endif %}
+                </div>
+
+            {% endfor %}
+
+        </div>
+    </section>
+</main>
+
+<footer class="rd-footer">
+    <a href="{% url 'rechercher_offres' %}" class="rd-footer-logo">
+        TalentConnect
+    </a>
+    <p>Construisez votre avenir, une opportunité à la fois.</p>
+</footer>
+
+</body>
+</html>

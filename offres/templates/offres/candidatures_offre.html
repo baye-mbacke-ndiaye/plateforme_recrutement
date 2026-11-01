@@ -1,0 +1,134 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidatures | TalentConnect</title>
+    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
+</head>
+
+<body class="page-tableau-bord-entreprise">
+
+    {% include "offres/partials/notifications.html" %}
+
+    <header class="entete entreprise-header">
+        <a class="logo" href="{% url 'rechercher_offres' %}">
+            Talent<span>Connect</span>
+        </a>
+
+        <nav>
+            <a href="{% url 'tableau_bord_entreprise' %}">Mon espace</a>
+            <a href="{% url 'publier_offre' %}">Publier une offre</a>
+            <form method="post" action="{% url 'deconnexion' %}">
+                {% csrf_token %}
+                <button type="submit">Déconnexion</button>
+            </form>
+        </nav>
+    </header>
+
+    <main class="dashboard-entreprise">
+
+        <section class="dashboard-intro">
+            <p class="dashboard-label">GESTION DES CANDIDATURES</p>
+            <h1>{{ offre.titre }}</h1>
+            <p>Entreprise : {{ profil.nom }}</p>
+            <p>{{ candidatures|length }} candidature(s) reçue(s)</p>
+        </section>
+
+        <section class="dashboard-offres">
+
+            <div class="dashboard-titre">
+                <h2>Liste des candidats</h2>
+                <a href="{% url 'tableau_bord_entreprise' %}">
+                    Retour au tableau de bord
+                </a>
+            </div>
+
+            {% if candidatures %}
+
+                <div class="dashboard-liste">
+
+                    {% for candidature in candidatures %}
+
+                        <article class="dashboard-offre-card">
+
+                            <h3>{{ candidature.etudiant.nom_complet }}</h3>
+
+                            <p>Email : {{ candidature.etudiant.email }}</p>
+                            <p>Téléphone : {{ candidature.etudiant.telephone }}</p>
+
+                            <p>
+                                Date :
+                                {{ candidature.date_candidature|date:"d/m/Y à H:i" }}
+                            </p>
+
+                            <p>
+                                Statut actuel :
+                                <strong>{{ candidature.get_statut_display }}</strong>
+                            </p>
+
+                            <form method="post"
+                                  action="{% url 'modifier_statut_candidature' candidature.id %}"
+                                  class="form-statut-candidature">
+
+                                {% csrf_token %}
+
+                                <label for="statut-{{ candidature.id }}">
+                                    Modifier le statut :
+                                </label>
+
+                                <select name="statut" id="statut-{{ candidature.id }}">
+                                    {% for valeur, libelle in statuts %}
+                                        <option value="{{ valeur }}"
+                                            {% if candidature.statut == valeur %}selected{% endif %}>
+                                            {{ libelle }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+
+                                <button type="submit">Enregistrer</button>
+                            </form>
+
+                            {% if candidature.lettre_motivation %}
+                                <h4>Lettre de motivation</h4>
+                                <p>{{ candidature.lettre_motivation|linebreaksbr }}</p>
+                            {% endif %}
+
+                            {% if candidature.cv %}
+                                <a href="{{ candidature.cv.url }}"
+                                   target="_blank"
+                                   rel="noopener">
+                                    Consulter le CV
+                                </a>
+                            {% else %}
+                                <p>Aucun CV fourni.</p>
+                            {% endif %}
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="dashboard-vide">
+                    <h3>Aucune candidature reçue</h3>
+                    <p>Les candidatures apparaîtront ici lorsque des étudiants postuleront.</p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <footer class="pied-page espace-footer">
+        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
+    </footer>
+
+</body>
+</html>
