@@ -101,6 +101,13 @@ path(
 ),
 
 path(
+    "entreprise/notification/<int:notification_id>/lue/",
+    views.marquer_notification_entreprise_lue,
+    name="marquer_notification_entreprise_lue"
+),
+
+
+path(
     "mon-profil/modifier/",
     views.modifier_profil_etudiant,
     name="modifier_profil_etudiant"

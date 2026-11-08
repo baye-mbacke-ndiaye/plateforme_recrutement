@@ -3,21 +3,106 @@
 {% block title %}Mes offres | KayJoop{% endblock %}
 
 {% block content %}
-<main class="page">
-
-    <div class="page-head">
-        <div>
+<main class="page enterprise-dashboard">
+    <header class="enterprise-welcome">
+        <div class="enterprise-welcome-copy">
+            <span class="eyebrow">Espace entreprise</span>
             <h1>Mes offres</h1>
-            <p class="page-sub">
-                {{ profil.nom }} · {{ offres|length }} offre{{ offres|length|pluralize }}
-                · {{ nombre_candidatures }} candidature{{ nombre_candidatures|pluralize }} reçue{{ nombre_candidatures|pluralize }}
+            <p>
+                Bienvenue chez <strong>{{ profil.nom }}</strong>. Retrouvez vos annonces et suivez les candidatures reçues.
             </p>
         </div>
-        <a href="{% url 'publier_offre' %}" class="btn btn-primary btn-lg">Publier une offre</a>
-    </div>
+        <a href="{% url 'publier_offre' %}" class="btn btn-primary btn-lg">
+            <span aria-hidden="true">＋</span> Publier une offre
+        </a>
+    </header>
+
+    <section class="enterprise-stats" aria-label="Résumé de votre activité">
+        <article class="enterprise-stat">
+            <span class="enterprise-stat-icon"><svg class="icon" aria-hidden="true"><use href="#i-briefcase"/></svg></span>
+            <div>
+                <span>Mes offres</span>
+                <strong>{{ offres|length }}</strong>
+                <small>Annonces dans votre espace</small>
+            </div>
+        </article>
+        <article class="enterprise-stat">
+            <span class="enterprise-stat-icon"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg></span>
+            <div>
+                <span>Candidatures reçues</span>
+                <strong>{{ nombre_candidatures }}</strong>
+                <small>Candidats intéressés par vos offres</small>
+            </div>
+        </article>
+        <article class="enterprise-stat{% if notifications_non_lues %} is-highlighted{% endif %}">
+            <span class="enterprise-stat-icon"><svg class="icon" aria-hidden="true"><use href="#i-bolt"/></svg></span>
+            <div>
+                <span>Nouvelles notifications</span>
+                <strong>{{ notifications_non_lues }}</strong>
+                <small>À consulter dans votre espace</small>
+            </div>
+        </article>
+    </section>
+
+    <section class="enterprise-panel" aria-labelledby="enterprise-notifications-title">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="eyebrow">Restez informé</span>
+                <h2 id="enterprise-notifications-title">Nouvelles candidatures</h2>
+            </div>
+            {% if notifications_non_lues %}
+                <span class="enterprise-count">{{ notifications_non_lues }} non lue{{ notifications_non_lues|pluralize }}</span>
+            {% endif %}
+        </div>
+        {% if notifications %}
+            <div class="enterprise-notifications">
+                {% for notification in notifications %}
+                    <article class="enterprise-notification{% if not notification.lu %} is-unread{% endif %}">
+                        <span class="enterprise-notification-icon" aria-hidden="true">
+                            <svg class="icon"><use href="#i-users"/></svg>
+                        </span>
+                        <div class="enterprise-notification-copy">
+                            <p>{{ notification.message }}</p>
+                            <small>{{ notification.date_creation|date:"d/m/Y à H:i" }}</small>
+                        </div>
+                        <div class="enterprise-notification-actions">
+                            <a class="btn btn-outline btn-sm" href="{% url 'candidatures_offre' notification.candidature.offre_id %}">
+                                Voir la candidature <span aria-hidden="true">→</span>
+                            </a>
+                            {% if not notification.lu %}
+                                <form method="post" action="{% url 'marquer_notification_entreprise_lue' notification.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-ghost-light btn-sm">Marquer comme lue</button>
+                                </form>
+                            {% else %}
+                                <span class="enterprise-read-state">✓ Lue</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="enterprise-empty-notifications">
+                <span class="enterprise-notification-icon" aria-hidden="true">
+                    <svg class="icon"><use href="#i-bolt"/></svg>
+                </span>
+                <p>Aucune nouvelle candidature pour le moment.</p>
+                <small>Les nouvelles candidatures apparaîtront ici.</small>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="enterprise-panel enterprise-offers-panel" aria-labelledby="enterprise-offers-title">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="eyebrow">Gérez vos annonces</span>
+                <h2 id="enterprise-offers-title">Toutes mes offres</h2>
+            </div>
+            <span class="enterprise-count">{{ offres|length }} offre{{ offres|length|pluralize }}</span>
+        </div>
 
     {% if offres %}
-    <div class="table-wrap">
+    <div class="table-wrap enterprise-table-wrap">
         <table class="table">
             <thead>
                 <tr>
@@ -51,7 +136,10 @@
                     <td data-label="Date limite">{{ offre.date_limite|date:"j M Y" }}</td>
 
                     <td data-label="Candidatures">
-                        <a href="{% url 'candidatures_offre' offre.id %}" class="cell-link" title="Voir les candidatures">{{ offre.nombre_candidatures }}</a>
+                        <a href="{% url 'candidatures_offre' offre.id %}" class="enterprise-applications-link" title="Voir les candidatures">
+                            {{ offre.nombre_candidatures }}
+                        </a>
+                        <span class="cell-sub">candidature{{ offre.nombre_candidatures|pluralize }}</span>
                     </td>
 
                     <td class="cell-actions">
@@ -73,12 +161,13 @@
     </div>
 
     {% else %}
-    <div class="empty">
+    <div class="empty enterprise-empty-offers">
         <h3>Aucune offre pour le moment</h3>
         <p>Publiez votre première annonce pour recevoir des candidatures.</p>
         <a href="{% url 'publier_offre' %}" class="btn btn-primary">Publier ma première offre</a>
     </div>
     {% endif %}
+    </section>
 
 </main>
 {% endblock %}

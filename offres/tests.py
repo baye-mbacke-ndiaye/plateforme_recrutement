@@ -1,12 +1,19 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from .forms import OffreForm
-from .models import Candidature, Offre, ProfilEntreprise, ProfilEtudiant
+from .models import (
+    Candidature,
+    NotificationEntreprise,
+    Offre,
+    ProfilEntreprise,
+    ProfilEtudiant,
+)
 
 
 User = get_user_model()
@@ -86,6 +93,53 @@ class OffrePagesTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_entreprise_est_notifiee_quand_un_etudiant_postule(self):
+        self.client.force_login(self.etudiant_user)
+
+        response = self.client.post(
+            reverse("postuler", args=[self.offre_active.pk]),
+            {
+                "cv": SimpleUploadedFile(
+                    "cv-etudiant.pdf",
+                    b"%PDF-1.4 test",
+                    content_type="application/pdf",
+                ),
+                "lettre_motivation": "Ma motivation",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("detail_offre", args=[self.offre_active.pk]),
+        )
+        candidature = Candidature.objects.get(
+            etudiant=self.etudiant,
+            offre=self.offre_active,
+        )
+        notification = NotificationEntreprise.objects.get(
+            entreprise=self.entreprise,
+            candidature=candidature,
+        )
+        self.assertFalse(notification.lu)
+        self.assertIn(self.etudiant.nom_complet, notification.message)
+        self.assertIn(self.offre_active.titre, notification.message)
+
+        self.client.force_login(self.entreprise_user)
+        dashboard = self.client.get(reverse("tableau_bord_entreprise"))
+        self.assertContains(dashboard, "Nouvelles candidatures")
+        self.assertContains(dashboard, self.etudiant.nom_complet)
+        self.assertContains(dashboard, self.offre_active.titre)
+        self.assertEqual(dashboard.context["notifications_non_lues"], 1)
+
+        self.client.post(
+            reverse(
+                "marquer_notification_entreprise_lue",
+                args=[notification.pk],
+            )
+        )
+        notification.refresh_from_db()
+        self.assertTrue(notification.lu)
 
     def test_formulaire_de_candidature_active_saffiche(self):
         self.client.force_login(self.etudiant_user)

@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 # Importer les formulaires utilisés dans les vues.
 from .forms import (
@@ -26,6 +27,7 @@ from .models import (
     ProfilEtudiant,
     ProfilEntreprise,
     NotificationCandidature,
+    NotificationEntreprise,
 )
 
 
@@ -445,6 +447,16 @@ def postuler(request, offre_id):
             # Enregistrer la candidature.
             candidature.save()
 
+            if offre.profil_entreprise_id:
+                NotificationEntreprise.objects.create(
+                    entreprise=offre.profil_entreprise,
+                    candidature=candidature,
+                    message=(
+                        f"{profil.nom_complet} a postulé à l'offre "
+                        f"« {offre.titre} »."
+                    ),
+                )
+
             messages.success(
                 request,
                 "Votre candidature a été envoyée avec succès !"
@@ -619,6 +631,13 @@ def tableau_bord_entreprise(request):
     nombre_candidatures = Candidature.objects.filter(
         offre__profil_entreprise=profil
     ).count()
+    notifications = NotificationEntreprise.objects.filter(
+        entreprise=profil
+    ).select_related(
+        "candidature",
+        "candidature__offre",
+        "candidature__etudiant",
+    )
 
     # Afficher le tableau de bord.
     return render(
@@ -628,6 +647,8 @@ def tableau_bord_entreprise(request):
             "profil": profil,
             "offres": offres,
             "nombre_candidatures": nombre_candidatures,
+            "notifications": notifications,
+            "notifications_non_lues": notifications.filter(lu=False).count(),
             "date_aujourdhui": timezone.localdate(),
         }
     )
@@ -885,3 +906,23 @@ def marquer_notification_lue(request, notification_id):
     )
 
     return redirect("mes_candidatures")
+
+
+@login_required
+@require_POST
+def marquer_notification_entreprise_lue(request, notification_id):
+    try:
+        profil = request.user.profil_entreprise
+    except ProfilEntreprise.DoesNotExist:
+        messages.error(request, "Accès réservé aux entreprises.")
+        return redirect("rechercher_offres")
+
+    notification = get_object_or_404(
+        NotificationEntreprise,
+        id=notification_id,
+        entreprise=profil,
+    )
+    notification.lu = True
+    notification.save(update_fields=["lu"])
+
+    return redirect("tableau_bord_entreprise")

@@ -246,3 +246,27 @@ class NotificationCandidature(models.Model):
 
     def __str__(self):
         return f"{self.etudiant.nom_complet} - {self.message}"
+
+
+class NotificationEntreprise(models.Model):
+    entreprise = models.ForeignKey(
+        ProfilEntreprise,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    candidature = models.ForeignKey(
+        Candidature,
+        on_delete=models.CASCADE,
+        related_name="notifications_entreprise",
+    )
+    message = models.CharField(max_length=255)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    lu = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-date_creation"]
+        verbose_name = "Notification entreprise"
+        verbose_name_plural = "Notifications entreprise"
+
+    def __str__(self):
+        return f"{self.entreprise.nom} - {self.message}"
