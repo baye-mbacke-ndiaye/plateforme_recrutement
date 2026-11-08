@@ -111,23 +111,63 @@ class ProfilEtudiant(models.Model):
         return f"Profil de {self.nom_complet}"
 
 
+
 class ProfilEntreprise(models.Model):
+    # Liste des 20 secteurs d'activité proposés aux entreprises
+    SECTEURS_ACTIVITE = [
+        ('informatique', 'Informatique et nouvelles technologies'),
+        ('banque', 'Banque et finance'),
+        ('assurance', 'Assurance'),
+        ('communication', 'Communication et marketing'),
+        ('audiovisuel', 'Graphisme et audiovisuel'),
+        ('btp', 'Bâtiment et travaux publics'),
+        ('logistique', 'Transport et logistique'),
+        ('sante', 'Santé et secteur médical'),
+        ('agriculture', 'Agriculture et agroalimentaire'),
+        ('education', 'Éducation et formation'),
+        ('commerce', 'Commerce et distribution'),
+        ('telecommunications', 'Télécommunications'),
+        ('tourisme', 'Tourisme et hôtellerie'),
+        ('industrie', 'Industrie et production'),
+        ('energie', 'Énergie et environnement'),
+        ('immobilier', 'Immobilier'),
+        ('administration', 'Administration et services publics'),
+        ('rh', 'Ressources humaines et recrutement'),
+        ('juridique', 'Droit et juridique'),
+        ('ong', 'ONG et développement'),
+    ]
+
+    # Relie chaque profil entreprise à un seul compte utilisateur Django
     utilisateur = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='profil_entreprise'
     )
+
+    # Nom officiel de l'entreprise
     nom = models.CharField(max_length=150)
-    secteur = models.CharField(max_length=150)
+
+    # Secteur d'activité choisi dans la liste ci-dessus
+    secteur = models.CharField(
+        max_length=150,
+        choices=SECTEURS_ACTIVITE
+    )
+
+    # Présentation et description des activités de l'entreprise
     description = models.TextField(blank=True)
+
+    # Adresse e-mail professionnelle, obligatoirement unique
     email = models.EmailField(unique=True)
+
+    # Numéro de téléphone de l'entreprise
     telephone = models.CharField(max_length=20, unique=True)
 
+    # Affiche le nom de l'entreprise dans l'administration Django
     def __str__(self):
         return self.nom
+
     
-    
-    
+     
 
 class Candidature(models.Model):
 

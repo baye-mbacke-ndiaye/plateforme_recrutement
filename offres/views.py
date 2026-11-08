@@ -50,11 +50,12 @@ def rechercher_offres(request):
 
     # Rechercher dans le titre, l'entreprise, la description et le lieu.
     if mot_cle:
-        offres = offres.filter(
-            Q(titre__icontains=mot_cle)
-            | Q(entreprise__icontains=mot_cle)
-            | Q(description__icontains=mot_cle)
-        )
+     offres = offres.filter(
+        Q(titre__icontains=mot_cle)
+        | Q(entreprise__icontains=mot_cle)
+        | Q(description__icontains=mot_cle)
+        | Q(localisation__icontains=mot_cle)
+    )
 
     # Filtrer par type de contrat (emploi, stage, alternance).
     types_valides = dict(Offre.TYPE_CHOIX)
@@ -563,8 +564,8 @@ def publier_offre(request):
             # Relier l'offre au profil de l'entreprise connectée.
             offre.profil_entreprise = profil
 
-            # L'offre reste en attente jusqu'à sa validation par l'administrateur.
-            offre.statut = "en_attente"
+            # Publier immédiatement l'offre sur la plateforme.
+            offre.statut = "ouverte"
 
             # Enregistrer l'offre dans la base de données.
             offre.save()

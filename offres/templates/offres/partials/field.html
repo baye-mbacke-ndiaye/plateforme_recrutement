@@ -8,6 +8,16 @@
             <button type="button" class="password-toggle" data-toggle-password aria-pressed="false"
                     aria-label="Afficher le mot de passe">Afficher</button>
         </div>
+    {% elif field.field.widget.input_type == "file" %}
+        <div class="file-picker" data-file-picker>
+            {{ field }}
+            <div class="file-selection">
+                <small class="help" data-file-name aria-live="polite"></small>
+                <button type="button" class="btn btn-outline btn-sm" data-clear-file hidden>
+                    Annuler ce choix
+                </button>
+            </div>
+        </div>
     {% else %}
         {{ field }}
     {% endif %}

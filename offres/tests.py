@@ -98,6 +98,26 @@ class OffrePagesTests(TestCase):
         self.assertContains(response, "Déposer ma candidature")
         self.assertNotContains(response, ">\\")
 
+    def test_formulaire_candidature_permet_d_annuler_le_choix_du_cv(self):
+        self.client.force_login(self.etudiant_user)
+
+        response = self.client.get(
+            reverse("postuler", args=[self.offre_active.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'type="file"')
+        self.assertContains(response, "data-clear-file")
+
+    def test_profil_etudiant_permet_d_annuler_le_choix_du_cv(self):
+        self.client.force_login(self.etudiant_user)
+
+        response = self.client.get(reverse("modifier_profil_etudiant"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'type="file"')
+        self.assertContains(response, "data-clear-file")
+
     def test_detail_indique_une_candidature_deja_envoyee(self):
         Candidature.objects.create(
             etudiant=self.etudiant,

@@ -245,33 +245,42 @@ class CandidatureForm(forms.ModelForm):
     
     
 
+
 class InscriptionEntrepriseForm(UserCreationForm):
-    # Informations principales sur l'entreprise.
+
+    # Informations principales de l'entreprise.
     nom = forms.CharField(
         max_length=150,
         label="Nom de l'entreprise"
     )
-    secteur = forms.CharField(
-        max_length=150,
+
+    # Liste déroulante contenant les 20 secteurs du modèle.
+    secteur = forms.ChoiceField(
+        choices=ProfilEntreprise.SECTEURS_ACTIVITE,
         label="Secteur d'activité"
     )
+
+    # Présentation de l'entreprise.
     description = forms.CharField(
         required=False,
         label="Présentation de l'entreprise",
-        widget=forms.Textarea(attrs={'rows': 4})
+        widget=forms.Textarea(attrs={
+            'rows': 4,
+            'placeholder': "Présentez les activités de votre entreprise..."
+        })
     )
 
-    # Coordonnées de contact de l'entreprise.
+    # Coordonnées professionnelles.
     email = forms.EmailField(
         label="Adresse e-mail professionnelle"
     )
+
     telephone = forms.CharField(
         max_length=20,
         label="Numéro de téléphone"
     )
 
-    # Indique à Django quel modèle utilisateur utiliser
-    # et quels champs afficher dans le formulaire.
+    # Configuration du formulaire d'inscription.
     class Meta(UserCreationForm.Meta):
         model = User
         fields = (
@@ -299,31 +308,35 @@ class InscriptionEntrepriseForm(UserCreationForm):
 
         return email
 
-    # Empêche deux profils entreprise d'utiliser le même téléphone.
+    # Vérifie que le numéro de téléphone est disponible.
     def clean_telephone(self):
         telephone = self.cleaned_data["telephone"].strip()
 
-        if ProfilEntreprise.objects.filter(telephone=telephone).exists():
+        if ProfilEntreprise.objects.filter(
+            telephone=telephone
+        ).exists():
             raise forms.ValidationError(
                 "Ce numéro de téléphone est déjà utilisé."
             )
 
         return telephone
 
-    # Enregistre le compte utilisateur et son profil
-    # dans une même transaction pour éviter un enregistrement partiel.
+    # Enregistre le compte utilisateur et le profil entreprise
+    # dans une seule transaction pour éviter les enregistrements incomplets.
     @transaction.atomic
     def save(self, commit=True):
+
+        # Prépare le compte utilisateur sans l'enregistrer immédiatement.
         utilisateur = super().save(commit=False)
 
         # Associe l'adresse e-mail au compte utilisateur.
         utilisateur.email = self.cleaned_data["email"]
 
         if commit:
-            # Enregistre d'abord le compte utilisateur.
+            # Enregistre le compte utilisateur.
             utilisateur.save()
 
-            # Crée ensuite le profil professionnel correspondant.
+            # Crée le profil professionnel associé à ce compte.
             ProfilEntreprise.objects.create(
                 utilisateur=utilisateur,
                 nom=self.cleaned_data["nom"],

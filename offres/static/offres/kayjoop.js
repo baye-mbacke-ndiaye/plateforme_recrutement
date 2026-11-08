@@ -12,6 +12,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    document.querySelectorAll("[data-file-picker]").forEach((picker) => {
+        const input = picker.querySelector('input[type="file"]');
+        const clearButton = picker.querySelector("[data-clear-file]");
+        const fileName = picker.querySelector("[data-file-name]");
+        if (!input || !clearButton || !fileName) return;
+
+        const updateSelection = () => {
+            const file = input.files && input.files[0];
+            fileName.textContent = file ? file.name : "";
+            clearButton.hidden = !file;
+        };
+
+        input.addEventListener("change", updateSelection);
+        clearButton.addEventListener("click", () => {
+            input.value = "";
+            updateSelection();
+            input.focus();
+        });
+    });
+
     /* Retour en haut de page */
     const haut = document.querySelector("[data-top]");
     if (haut) {
