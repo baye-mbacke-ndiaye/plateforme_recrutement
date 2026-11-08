@@ -1,0 +1,64 @@
+{% extends "offres/base.html" %}
+
+{% block title %}Administration | KayJoop{% endblock %}
+
+{% block content %}
+<main class="page">
+    <div class="page-head">
+        <div>
+            <span class="eyebrow">Administration</span>
+            <h1>Vue d'ensemble</h1>
+            <p class="page-sub">Bonjour {{ user.get_username }}, voici l'activité de la plateforme.</p>
+        </div>
+    </div>
+
+    {% include "offres/gestion/_tabs.html" %}
+
+    <section class="stat-cards stat-cards-3" aria-label="Chiffres clés">
+        <div class="stat-card{% if nb_en_attente %} is-alert{% endif %}"><span>Offres à valider</span><strong>{{ nb_en_attente }}</strong><small>En attente de validation</small></div>
+        <div class="stat-card"><span>Offres publiées</span><strong>{{ nb_publiees }}</strong><small>Visibles par les candidats</small></div>
+        <div class="stat-card"><span>Entreprises</span><strong>{{ nb_entreprises }}</strong><small>Comptes entreprise</small></div>
+        <div class="stat-card"><span>Candidats</span><strong>{{ nb_candidats }}</strong><small>Comptes étudiants</small></div>
+        <div class="stat-card"><span>Candidatures</span><strong>{{ nb_candidatures }}</strong><small>Envoyées au total</small></div>
+        <div class="stat-card"><span>Comptes</span><strong>{{ nb_comptes }}</strong><small>Tous profils confondus</small></div>
+    </section>
+
+    <h2 class="section-title" style="margin-bottom:18px">Offres à valider</h2>
+
+    {% if offres_a_valider %}
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th scope="col">Offre</th><th scope="col">Date limite</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody>
+                {% for offre in offres_a_valider %}
+                <tr>
+                    <td data-label="Offre">
+                        <a href="{% url 'detail_offre' offre.id %}" class="cell-link">{{ offre.titre }}</a>
+                        <span class="cell-sub">{{ offre.entreprise }} · {{ offre.get_type_contrat_display }} — {{ offre.localisation }}</span>
+                    </td>
+                    <td data-label="Date limite">{{ offre.date_limite|date:"j M Y" }}</td>
+                    <td class="cell-actions">
+                        <div class="row-actions">
+                            <form method="post" action="{% url 'gestion_offre_action' offre.id 'valider' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="suivant" value="{% url 'gestion_tableau_bord' %}">
+                                <button type="submit" class="btn btn-primary btn-sm">Valider et publier</button>
+                            </form>
+                            <form method="post" action="{% url 'gestion_offre_action' offre.id 'cloturer' %}" data-confirm="Refuser cette offre ? Elle sera clôturée.">
+                                {% csrf_token %}
+                                <input type="hidden" name="suivant" value="{% url 'gestion_tableau_bord' %}">
+                                <button type="submit" class="btn btn-danger btn-sm">Refuser</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if nb_en_attente > 5 %}<p style="margin-top:14px"><a href="{% url 'gestion_offres' %}?statut=en_attente" class="link">Voir les {{ nb_en_attente }} offres en attente →</a></p>{% endif %}
+    {% else %}
+    <div class="empty"><h3>Rien à valider</h3><p>Toutes les offres ont été traitées.</p></div>
+    {% endif %}
+</main>
+{% endblock %}

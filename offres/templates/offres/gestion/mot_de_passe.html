@@ -1,0 +1,31 @@
+{% extends "offres/base.html" %}
+
+{% block title %}Nouveau mot de passe | KayJoop{% endblock %}
+
+{% block content %}
+<main class="page page-narrow">
+    <div class="page-head">
+        <div>
+            <span class="eyebrow">Administration</span>
+            <h1>Nouveau mot de passe</h1>
+        </div>
+    </div>
+
+    {% include "offres/gestion/_tabs.html" %}
+
+    <section class="card">
+        <h2>Compte « {{ cible.get_username }} »</h2>
+        <p class="card-intro">
+            Voici le mot de passe temporaire. <strong>Il ne sera plus affiché</strong> après avoir quitté cette page :
+            transmettez-le à la personne concernée, qui pourra le changer ensuite.
+        </p>
+
+        <div class="secret-box">
+            <code id="secret">{{ mot_de_passe }}</code>
+            <button type="button" class="btn btn-dark btn-sm" data-copy="#secret">Copier</button>
+        </div>
+
+        <a href="{% url 'gestion_utilisateurs' %}" class="btn btn-primary">Retour aux utilisateurs</a>
+    </section>
+</main>
+{% endblock %}

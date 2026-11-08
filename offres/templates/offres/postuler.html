@@ -1,90 +1,31 @@
+{% extends "offres/base.html" %}
 
-{% load static %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Envoyez votre candidature à cette offre sur TalentConnect.">
-    <title>Postuler à une offre | TalentConnect</title>
-    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
-</head>
-<body class="page-postuler">
-    <header class="entete detail-header">
-        <a href="{% url 'rechercher_offres' %}" class="detail-logo">
-            Talent<span>Connect</span>
-        </a>
-        <nav aria-label="Navigation principale">
-            <a href="{% url 'rechercher_offres' %}">Accueil</a>
-            {% if user.is_authenticated %}
-                {% if user.profil_entreprise %}
-                    <a href="{% url 'tableau_bord_entreprise' %}">Mon espace</a>
-                {% elif user.profil_etudiant %}
-                    <a href="{% url 'mes_candidatures' %}">Mes candidatures</a>
-                {% endif %}
-                <form method="post" action="{% url 'deconnexion' %}" class="rd-nav-logout">
-                    {% csrf_token %}
-                    <button type="submit" class="rd-nav-logout-button">
-                        Déconnexion
-                    </button>
-                </form>
-            {% else %}
-                <a href="{% url 'connexion' %}">Connexion</a>
-                <a href="{% url 'inscription' %}">Créer un compte</a>
-            {% endif %}
-        </nav>
-    </header>
+{% block title %}Postuler à une offre | KayJoop{% endblock %}
+{% block meta_description %}Envoyez votre candidature à cette offre sur KayJoop.{% endblock %}
 
-    <main class="candidature-container">
-        <a href="{% url 'detail_offre' offre.id %}" class="detail-retour">
-            ← Retour à l'offre
-        </a>
+{% block content %}
+<main class="page page-narrow">
+    <a href="{% url 'detail_offre' offre.id %}" class="back">← Retour à l'offre</a>
 
-        <section class="candidature-card">
-            <div class="candidature-notifications">
-                {% include "offres/partials/notifications.html" %}
-            </div>
+    <section class="card">
+        <h1>Déposer ma candidature</h1>
+        <p class="card-intro">Complétez les informations ci-dessous pour postuler.</p>
 
-            <h1>Déposer ma candidature</h1>
-            <p class="candidature-intro">
-                Complétez les informations ci-dessous pour postuler.
-            </p>
+        <div class="offer-summary">
+            <h2>{{ offre.titre }}</h2>
+            <p>{{ offre.entreprise }} · {{ offre.localisation|default:"Localisation non précisée" }}</p>
+        </div>
 
-            <div class="offre-resume">
-                <h2>{{ offre.titre }}</h2>
-                <p>{{ offre.entreprise }}</p>
-                <p>{{ offre.localisation|default:"Localisation non précisée" }}</p>
-            </div>
+        {% if form.non_field_errors %}<div class="alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
 
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                {{ form.non_field_errors }}
-
-                <div class="champ-candidature">
-                    {{ form.cv.label_tag }}
-                    {{ form.cv }}
-                    {{ form.cv.errors }}
-                    <small class="aide-cv">
-                        Format PDF uniquement, 5 Mo maximum.
-                    </small>
-                </div>
-
-                <div class="champ-candidature">
-                    {{ form.lettre_motivation.label_tag }}
-                    {{ form.lettre_motivation }}
-                    {{ form.lettre_motivation.errors }}
-                </div>
-
-                <button type="submit" class="bouton-candidature">
-                    Envoyer ma candidature
-                </button>
-            </form>
-        </section>
-    </main>
-
-    <footer class="pied-page">
-        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
-    </footer>
-</body>
-</html>
+        <form method="post" enctype="multipart/form-data" class="form">
+            {% csrf_token %}
+            {% for field in form %}
+                {% include "offres/partials/field.html" with field=field %}
+                {% if field.name == "cv" %}<small class="help" style="margin-top:-12px">Format PDF uniquement, 5 Mo maximum.</small>{% endif %}
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-block">Envoyer ma candidature</button>
+        </form>
+    </section>
+</main>
+{% endblock %}

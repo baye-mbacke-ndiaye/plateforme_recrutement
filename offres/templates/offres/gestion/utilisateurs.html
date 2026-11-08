@@ -1,0 +1,64 @@
+{% extends "offres/base.html" %}
+
+{% block title %}Administration · Utilisateurs | KayJoop{% endblock %}
+
+{% block content %}
+<main class="page">
+    <div class="page-head">
+        <div>
+            <span class="eyebrow">Administration</span>
+            <h1>Utilisateurs</h1>
+            <p class="page-sub">Les mots de passe sont chiffrés et ne peuvent pas être affichés. Vous pouvez en générer un nouveau.</p>
+        </div>
+    </div>
+
+    {% include "offres/gestion/_tabs.html" %}
+
+    <form method="get" class="toolbar">
+        <input type="search" name="q" value="{{ recherche }}" class="input" placeholder="Nom d'utilisateur ou e-mail" aria-label="Rechercher un compte">
+        <button type="submit" class="btn btn-dark">Rechercher</button>
+        {% if recherche %}<a href="{% url 'gestion_utilisateurs' %}" class="link">Effacer</a>{% endif %}
+    </form>
+
+    {% if comptes %}
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr><th scope="col">Compte</th><th scope="col">Profil</th><th scope="col">Dernière connexion</th><th scope="col">État</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
+            </thead>
+            <tbody>
+                {% for compte in comptes %}
+                <tr>
+                    <td data-label="Compte">
+                        <strong>{{ compte.utilisateur.get_username }}</strong>{% if compte.est_moi %} <span class="muted">(vous)</span>{% endif %}
+                        <span class="cell-sub">{% if compte.nom %}{{ compte.nom }} · {% endif %}{{ compte.utilisateur.email|default:"pas d'e-mail" }}</span>
+                    </td>
+                    <td data-label="Profil"><span class="badge {% if compte.role == 'Entreprise' %}badge-violet{% elif compte.role == 'Candidat' %}badge-info{% elif compte.role == 'Sans profil' %}badge-closed{% else %}badge-wait{% endif %}">{{ compte.role }}</span></td>
+                    <td data-label="Dernière connexion">{% if compte.utilisateur.last_login %}{{ compte.utilisateur.last_login|date:"d/m/Y H:i" }}{% else %}Jamais{% endif %}</td>
+                    <td data-label="État">{% if compte.utilisateur.is_active %}<span class="badge badge-ok">Actif</span>{% else %}<span class="badge badge-danger">Désactivé</span>{% endif %}</td>
+                    <td class="cell-actions">
+                        {% if not compte.est_moi and compte.modifiable %}
+                        <div class="row-actions">
+                            <form method="post" action="{% url 'gestion_utilisateur_mot_de_passe' compte.utilisateur.pk %}"
+                                  data-confirm="Générer un nouveau mot de passe pour {{ compte.utilisateur.get_username }} ? L'ancien ne fonctionnera plus.">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline btn-sm">Nouveau mot de passe</button>
+                            </form>
+                            <form method="post" action="{% url 'gestion_utilisateur_activer' compte.utilisateur.pk %}"
+                                  data-confirm="{% if compte.utilisateur.is_active %}Désactiver{% else %}Réactiver{% endif %} ce compte ?">
+                                {% csrf_token %}<input type="hidden" name="suivant" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn {% if compte.utilisateur.is_active %}btn-danger{% else %}btn-primary{% endif %} btn-sm">{% if compte.utilisateur.is_active %}Désactiver{% else %}Réactiver{% endif %}</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty"><h3>Aucun compte</h3><p>Aucun compte ne correspond à cette recherche.</p></div>
+    {% endif %}
+</main>
+{% endblock %}

@@ -11,9 +11,13 @@ class Offre(models.Model):
         ('alternance', 'Alternance'),
     ]
 
+    # en_attente : envoyée par l'entreprise, à valider par l'administrateur.
+    # ouverte    : publiée et visible par les candidats.
+    # fermee     : clôturée par l'entreprise.
     STATUT_CHOIX = [
-        ('ouverte', 'Ouverte'),
-        ('fermee', 'Fermée'),
+        ('en_attente', 'En attente de validation'),
+        ('ouverte', 'Publiée'),
+        ('fermee', 'Clôturée'),
     ]
 
     titre = models.CharField(max_length=200)

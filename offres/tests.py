@@ -166,10 +166,7 @@ class OffrePagesTests(TestCase):
         self.assertContains(response, 'aria-current="page"')
         self.assertContains(
             response,
-            (
-                f'<form method="post" action="{reverse("deconnexion")}">'
-            ),
-            html=False,
+            f'action="{reverse("deconnexion")}"',
         )
 
     def test_un_etudiant_ne_peut_pas_acceder_a_la_publication(self):
@@ -178,3 +175,181 @@ class OffrePagesTests(TestCase):
         response = self.client.get(reverse("publier_offre"))
 
         self.assertRedirects(response, reverse("rechercher_offres"))
+
+
+class GestionOffresEntrepriseTests(TestCase):
+    """Publication en attente, modification et clôture des offres."""
+
+    def setUp(self):
+        def creer_entreprise(nom, suffixe):
+            user = User.objects.create_user(
+                username=f"ent{suffixe}", password="motdepasse-securise"
+            )
+            profil = ProfilEntreprise.objects.create(
+                utilisateur=user, nom=nom, secteur="IT",
+                email=f"c{suffixe}@test.example", telephone=f"77000010{suffixe}",
+            )
+            return user, profil
+
+        self.user_a, self.profil_a = creer_entreprise("Entreprise A", 1)
+        self.user_b, self.profil_b = creer_entreprise("Entreprise B", 2)
+        self.offre = Offre.objects.create(
+            titre="Offre A", entreprise="Entreprise A",
+            profil_entreprise=self.profil_a, description="Desc",
+            type_contrat="stage", localisation="Dakar",
+            date_limite=timezone.localdate() + timedelta(days=5),
+        )
+
+    def donnees_offre(self, titre="Nouvelle offre"):
+        return {
+            "titre": titre, "description": "Description",
+            "type_contrat": "emploi", "localisation": "Dakar",
+            "date_limite": (timezone.localdate() + timedelta(days=10)).isoformat(),
+        }
+
+    def test_nouvelle_offre_est_en_attente_et_invisible(self):
+        self.client.force_login(self.user_a)
+        self.client.post(reverse("publier_offre"), self.donnees_offre())
+
+        nouvelle = Offre.objects.get(titre="Nouvelle offre")
+        self.assertEqual(nouvelle.statut, "en_attente")
+
+        reponse = self.client.get(reverse("rechercher_offres"))
+        self.assertNotIn(nouvelle, list(reponse.context["offres"]))
+
+    def test_modifier_offre(self):
+        self.client.force_login(self.user_a)
+        reponse = self.client.post(
+            reverse("modifier_offre", args=[self.offre.pk]),
+            self.donnees_offre("Titre modifié"),
+        )
+        self.assertRedirects(reponse, reverse("tableau_bord_entreprise"))
+        self.offre.refresh_from_db()
+        self.assertEqual(self.offre.titre, "Titre modifié")
+        self.assertEqual(self.offre.statut, "ouverte")
+
+    def test_cloturer_offre_par_post_uniquement(self):
+        self.client.force_login(self.user_a)
+        self.client.get(reverse("cloturer_offre", args=[self.offre.pk]))
+        self.offre.refresh_from_db()
+        self.assertEqual(self.offre.statut, "ouverte")
+
+        self.client.post(reverse("cloturer_offre", args=[self.offre.pk]))
+        self.offre.refresh_from_db()
+        self.assertEqual(self.offre.statut, "fermee")
+
+    def test_une_autre_entreprise_ne_peut_ni_modifier_ni_cloturer(self):
+        self.client.force_login(self.user_b)
+        self.assertEqual(
+            self.client.get(reverse("modifier_offre", args=[self.offre.pk])).status_code, 404
+        )
+        self.assertEqual(
+            self.client.post(reverse("cloturer_offre", args=[self.offre.pk])).status_code, 404
+        )
+
+    def test_tableau_affiche_etat_et_actions(self):
+        self.client.force_login(self.user_a)
+        reponse = self.client.get(reverse("tableau_bord_entreprise"))
+        self.assertContains(reponse, "Publiée")
+        self.assertContains(reponse, "Modifier")
+        self.assertContains(reponse, "Clôturer")
+
+    def test_filtre_par_type_sur_l_accueil(self):
+        reponse = self.client.get(reverse("rechercher_offres"), {"type": "emploi"})
+        self.assertEqual(list(reponse.context["offres"]), [])
+        reponse = self.client.get(reverse("rechercher_offres"), {"type": "stage"})
+        self.assertEqual(list(reponse.context["offres"]), [self.offre])
+
+
+class AdministrationIntegreeTests(TestCase):
+    """Administration du site réservée au personnel."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username="gestionnaire", password="motdepasse-securise", is_staff=True
+        )
+        self.super = User.objects.create_user(
+            username="chef", password="motdepasse-securise",
+            is_staff=True, is_superuser=True,
+        )
+        self.membre = User.objects.create_user(
+            username="membre", password="ancien-mot-de-passe"
+        )
+        self.offre = Offre.objects.create(
+            titre="À valider", entreprise="Société", description="Desc",
+            type_contrat="emploi", localisation="Dakar", statut="en_attente",
+            date_limite=timezone.localdate() + timedelta(days=5),
+        )
+
+    def test_visiteur_redirige_vers_la_connexion(self):
+        reponse = self.client.get(reverse("gestion_tableau_bord"))
+        self.assertRedirects(reponse, reverse("connexion"))
+
+    def test_compte_non_staff_refuse(self):
+        self.client.force_login(self.membre)
+        for nom in ("gestion_tableau_bord", "gestion_offres",
+                    "gestion_utilisateurs", "gestion_candidatures"):
+            self.assertEqual(self.client.get(reverse(nom)).status_code, 403)
+
+    def test_pages_accessibles_au_personnel(self):
+        self.client.force_login(self.admin)
+        for nom in ("gestion_tableau_bord", "gestion_offres",
+                    "gestion_utilisateurs", "gestion_candidatures"):
+            self.assertEqual(self.client.get(reverse(nom)).status_code, 200)
+
+    def test_valider_une_offre(self):
+        self.client.force_login(self.admin)
+        self.client.post(reverse("gestion_offre_action", args=[self.offre.pk, "valider"]))
+        self.offre.refresh_from_db()
+        self.assertEqual(self.offre.statut, "ouverte")
+
+    def test_action_refusee_en_get_et_non_staff(self):
+        self.client.force_login(self.admin)
+        reponse = self.client.get(reverse("gestion_offre_action", args=[self.offre.pk, "valider"]))
+        self.assertEqual(reponse.status_code, 405)
+
+        self.client.force_login(self.membre)
+        self.client.post(reverse("gestion_offre_action", args=[self.offre.pk, "supprimer"]))
+        self.assertTrue(Offre.objects.filter(pk=self.offre.pk).exists())
+
+    def test_supprimer_une_offre(self):
+        self.client.force_login(self.admin)
+        self.client.post(reverse("gestion_offre_action", args=[self.offre.pk, "supprimer"]))
+        self.assertFalse(Offre.objects.filter(pk=self.offre.pk).exists())
+
+    def test_nouveau_mot_de_passe_temporaire(self):
+        self.client.force_login(self.admin)
+        reponse = self.client.post(
+            reverse("gestion_utilisateur_mot_de_passe", args=[self.membre.pk])
+        )
+        temporaire = reponse.context["mot_de_passe"]
+        self.assertContains(reponse, temporaire)
+        self.membre.refresh_from_db()
+        self.assertTrue(self.membre.check_password(temporaire))
+        self.assertFalse(self.membre.check_password("ancien-mot-de-passe"))
+
+    def test_pas_d_action_sur_soi_ni_sur_le_personnel(self):
+        self.client.force_login(self.admin)
+        self.assertEqual(
+            self.client.post(reverse("gestion_utilisateur_mot_de_passe", args=[self.admin.pk])).status_code, 403
+        )
+        self.assertEqual(
+            self.client.post(reverse("gestion_utilisateur_mot_de_passe", args=[self.super.pk])).status_code, 403
+        )
+        self.client.force_login(self.super)
+        self.assertEqual(
+            self.client.post(reverse("gestion_utilisateur_mot_de_passe", args=[self.admin.pk])).status_code, 200
+        )
+
+    def test_desactiver_un_compte(self):
+        self.client.force_login(self.admin)
+        self.client.post(reverse("gestion_utilisateur_activer", args=[self.membre.pk]))
+        self.membre.refresh_from_db()
+        self.assertFalse(self.membre.is_active)
+
+    def test_connexion_du_personnel_vers_l_administration(self):
+        reponse = self.client.post(
+            reverse("connexion"),
+            {"username": "gestionnaire", "password": "motdepasse-securise"},
+        )
+        self.assertRedirects(reponse, reverse("gestion_tableau_bord"))

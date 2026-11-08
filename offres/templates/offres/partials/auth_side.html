@@ -1,0 +1,33 @@
+{# Panneau de marque des pages de connexion / inscription. Paramètre : variant #}
+<aside class="auth-side">
+    <div class="auth-side-inner">
+        <span class="pill">
+            <svg class="icon" aria-hidden="true"><use href="#i-bolt"/></svg>
+            {% if variant == "entreprise" %}Espace recruteur{% elif variant == "etudiant" %}Espace candidat{% else %}Votre avenir commence ici{% endif %}
+        </span>
+
+        {% if variant == "connexion" %}
+            <h2>Heureux de vous <span class="accent">revoir</span></h2>
+            <p>Retrouvez vos offres, suivez vos candidatures et restez connecté aux meilleures opportunités.</p>
+        {% elif variant == "entreprise" %}
+            <h2>Recrutez les <span class="accent">meilleurs talents</span></h2>
+            <p>Publiez vos offres, recevez des candidatures qualifiées et gérez vos recrutements depuis un seul espace.</p>
+        {% else %}
+            <h2>Trouvez l'opportunité qui <span class="accent">booste votre carrière</span></h2>
+            <p>Emplois, stages et alternances proposés par des entreprises qui recrutent.</p>
+        {% endif %}
+
+        <ul class="auth-points">
+            {% if variant == "entreprise" %}
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Publication d'offres simple et rapide</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Suivi des candidatures en un coup d'œil</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Offres validées par notre équipe</li>
+            {% else %}
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Postulez en quelques clics</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Suivez l'état de chaque candidature</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Sécurité et confidentialité garanties</li>
+            {% endif %}
+        </ul>
+
+    </div>
+</aside>

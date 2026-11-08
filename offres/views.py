@@ -36,14 +36,19 @@ from .models import (
 def rechercher_offres(request):
 
     mot_cle = request.GET.get('q', '').strip()
+    type_contrat = request.GET.get('type', '').strip()
+    localisation = request.GET.get('lieu', '').strip()
+    voir_tout = request.GET.get('tous') == '1'
 
-    # Afficher uniquement les offres ouvertes et non expirées.
-    offres = Offre.objects.filter(
+    # Offres publiées (ouvertes) et non expirées : ce sont les seules visibles.
+    offres_publiques = Offre.objects.filter(
         statut='ouverte',
         date_limite__gte=timezone.localdate(),
     )
 
-    # Rechercher dans le titre, l'entreprise et la description.
+    offres = offres_publiques
+
+    # Rechercher dans le titre, l'entreprise, la description et le lieu.
     if mot_cle:
         offres = offres.filter(
             Q(titre__icontains=mot_cle)
@@ -51,12 +56,53 @@ def rechercher_offres(request):
             | Q(description__icontains=mot_cle)
         )
 
+    # Filtrer par type de contrat (emploi, stage, alternance).
+    types_valides = dict(Offre.TYPE_CHOIX)
+    if type_contrat not in types_valides:
+        type_contrat = ''
+    if type_contrat:
+        offres = offres.filter(type_contrat=type_contrat)
+
+    # Filtrer par localisation.
+    if localisation:
+        offres = offres.filter(localisation__iexact=localisation)
+
+    filtre_actif = bool(mot_cle or type_contrat or localisation)
+
+    offres = offres.order_by('-date_creation')
+    total_offres = offres.count()
+
+    # Sans filtre, on montre les offres les plus récentes (liste complète sur demande).
+    limite = 8
+    liste_reduite = not filtre_actif and not voir_tout and total_offres > limite
+    if liste_reduite:
+        offres = offres[:limite]
+
+    localisations = (
+        offres_publiques
+        .exclude(localisation='')
+        .order_by('localisation')
+        .values_list('localisation', flat=True)
+        .distinct()
+    )
+
     return render(
         request,
         'offres/recherche.html',
         {
             'offres': offres,
             'mot_cle': mot_cle,
+            'type_contrat': type_contrat,
+            'localisation': localisation,
+            'types_contrat': Offre.TYPE_CHOIX,
+            'localisations': localisations,
+            'filtre_actif': filtre_actif,
+            'liste_reduite': liste_reduite,
+            'total_offres': total_offres,
+            # Chiffres réels de la plateforme affichés dans l'accueil.
+            'stat_offres': offres_publiques.count(),
+            'stat_entreprises': ProfilEntreprise.objects.count(),
+            'stat_candidats': ProfilEtudiant.objects.count(),
         }
     )
 
@@ -129,7 +175,7 @@ def inscription(request):
 
             messages.success(
                 request,
-                "Ton compte étudiant a été créé avec succès."
+                "Votre compte étudiant a été créé avec succès."
             )
 
             # Connecter automatiquement l'étudiant.
@@ -190,7 +236,7 @@ def modifier_profil_etudiant(request):
 
             messages.success(
                 request,
-                "Ton profil a été modifié avec succès."
+                "Votre profil a été modifié avec succès."
             )
 
             return redirect("modifier_profil_etudiant")
@@ -287,9 +333,19 @@ def connexion(request):
 
                 return redirect('rechercher_offres')
 
+            # Rediriger le personnel vers l'administration du site.
+            if utilisateur.is_staff:
+
+                messages.success(
+                    request,
+                    "Connexion réussie. Bienvenue dans l'administration."
+                )
+
+                return redirect('gestion_tableau_bord')
+
             messages.warning(
                 request,
-                "Aucun profil TalentConnect n'est associé à ce compte."
+                "Aucun profil KayJoop n'est associé à ce compte."
             )
 
             return redirect('rechercher_offres')
@@ -390,7 +446,7 @@ def postuler(request, offre_id):
 
             messages.success(
                 request,
-                "Ta candidature a été envoyée avec succès !"
+                "Votre candidature a été envoyée avec succès !"
             )
 
             return redirect('detail_offre', offre_id=offre.id)
@@ -507,12 +563,16 @@ def publier_offre(request):
             # Relier l'offre au profil de l'entreprise connectée.
             offre.profil_entreprise = profil
 
+            # L'offre reste en attente jusqu'à sa validation par l'administrateur.
+            offre.statut = "en_attente"
+
             # Enregistrer l'offre dans la base de données.
             offre.save()
 
             messages.success(
                 request,
-                "Votre offre a été publiée avec succès."
+                "Votre offre a été envoyée. Elle sera visible par les candidats "
+                "dès sa validation par notre équipe."
             )
 
             return redirect("tableau_bord_entreprise")
@@ -570,6 +630,94 @@ def tableau_bord_entreprise(request):
             "date_aujourdhui": timezone.localdate(),
         }
     )
+
+
+# ============================================================
+# PARTIE 11 BIS : MODIFIER OU CLÔTURER UNE OFFRE
+# ============================================================
+
+def _profil_entreprise_ou_redirection(request):
+    """Retourne le profil entreprise de l'utilisateur, ou None s'il n'en a pas."""
+    try:
+        return request.user.profil_entreprise
+    except ProfilEntreprise.DoesNotExist:
+        messages.error(
+            request,
+            "Cet espace est réservé aux comptes entreprise."
+        )
+        return None
+
+
+@login_required
+def modifier_offre(request, offre_id):
+
+    profil = _profil_entreprise_ou_redirection(request)
+    if profil is None:
+        return redirect("rechercher_offres")
+
+    # Une entreprise ne peut modifier que ses propres offres.
+    offre = get_object_or_404(
+        Offre,
+        id=offre_id,
+        profil_entreprise=profil
+    )
+
+    if request.method == "POST":
+
+        form = OffreForm(request.POST, instance=offre)
+
+        if form.is_valid():
+            form.save()
+
+            messages.success(
+                request,
+                "L'offre a été modifiée avec succès."
+            )
+
+            return redirect("tableau_bord_entreprise")
+
+    else:
+        form = OffreForm(instance=offre)
+
+    return render(
+        request,
+        "offres/publier_offre.html",
+        {
+            "form": form,
+            "offre": offre,
+            "mode_edition": True,
+        }
+    )
+
+
+@login_required
+def cloturer_offre(request, offre_id):
+
+    profil = _profil_entreprise_ou_redirection(request)
+    if profil is None:
+        return redirect("rechercher_offres")
+
+    offre = get_object_or_404(
+        Offre,
+        id=offre_id,
+        profil_entreprise=profil
+    )
+
+    # La clôture se fait uniquement par un formulaire POST.
+    if request.method == "POST":
+
+        if offre.statut == "fermee":
+            messages.info(request, "Cette offre est déjà clôturée.")
+        else:
+            offre.statut = "fermee"
+            offre.save(update_fields=["statut"])
+
+            messages.success(
+                request,
+                f"L'offre « {offre.titre} » a été clôturée."
+            )
+
+    return redirect("tableau_bord_entreprise")
 
 
 # ============================================================

@@ -1,0 +1,57 @@
+{% load static %}
+{% with nom=request.resolver_match.url_name %}
+<header class="header">
+    <div class="header-inner">
+
+        <a href="{% url 'rechercher_offres' %}" class="logo" aria-label="KayJoop — accueil">
+            <img src="{% static 'offres/logo-kayjoop.svg' %}" alt="" width="38" height="38">
+            <span>Kay<span class="logo-accent">Joop</span></span>
+        </a>
+
+        <button type="button" class="burger" data-burger aria-expanded="false" aria-controls="menu" aria-label="Ouvrir le menu">
+            <span></span><span></span><span></span>
+        </button>
+
+        <nav class="nav" id="menu" aria-label="Navigation principale">
+
+            <a href="{% url 'rechercher_offres' %}" class="nav-link{% if nom == 'rechercher_offres' %} is-active{% endif %}"{% if nom == 'rechercher_offres' %} aria-current="page"{% endif %}>Accueil</a>
+
+            <div class="dropdown">
+                <a href="{% url 'rechercher_offres' %}?tous=1#offres" class="nav-link">Offres d'emploi <span class="caret" aria-hidden="true">▾</span></a>
+                <div class="dropdown-menu">
+                    <a href="{% url 'rechercher_offres' %}?tous=1#offres">Toutes les offres</a>
+                    <a href="{% url 'rechercher_offres' %}?type=emploi#offres">Emplois</a>
+                    <a href="{% url 'rechercher_offres' %}?type=stage#offres">Stages</a>
+                    <a href="{% url 'rechercher_offres' %}?type=alternance#offres">Alternances</a>
+                </div>
+            </div>
+
+            {% if user.is_authenticated %}
+
+                {% if user.is_staff %}
+                    <a href="{% url 'gestion_tableau_bord' %}" class="nav-link{% if 'gestion' in nom %} is-active{% endif %}"{% if 'gestion' in nom %} aria-current="page"{% endif %}>Administration</a>
+                {% endif %}
+
+                {% if user.profil_entreprise %}
+                    <a href="{% url 'tableau_bord_entreprise' %}" class="nav-link{% if nom == 'tableau_bord_entreprise' %} is-active{% endif %}"{% if nom == 'tableau_bord_entreprise' %} aria-current="page"{% endif %}>Mes offres</a>
+                    <a href="{% url 'publier_offre' %}" class="nav-link{% if nom == 'publier_offre' %} is-active{% endif %}"{% if nom == 'publier_offre' %} aria-current="page"{% endif %}>Publier une offre</a>
+                {% elif user.profil_etudiant %}
+                    <a href="{% url 'mes_candidatures' %}" class="nav-link{% if nom == 'mes_candidatures' %} is-active{% endif %}"{% if nom == 'mes_candidatures' %} aria-current="page"{% endif %}>Candidatures</a>
+                    <a href="{% url 'modifier_profil_etudiant' %}" class="nav-link{% if nom == 'modifier_profil_etudiant' %} is-active{% endif %}"{% if nom == 'modifier_profil_etudiant' %} aria-current="page"{% endif %}>Mon profil</a>
+                {% endif %}
+
+                <form method="post" action="{% url 'deconnexion' %}" class="nav-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost">Déconnexion</button>
+                </form>
+
+            {% else %}
+                <a href="{% url 'inscription_entreprise' %}" class="nav-link">Entreprises</a>
+                <a href="{% url 'connexion' %}" class="nav-link{% if nom == 'connexion' %} is-active{% endif %}"{% if nom == 'connexion' %} aria-current="page"{% endif %}>Connexion</a>
+                <a href="{% url 'inscription' %}" class="btn btn-primary">Créer un compte</a>
+            {% endif %}
+
+        </nav>
+    </div>
+</header>
+{% endwith %}

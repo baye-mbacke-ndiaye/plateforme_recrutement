@@ -13,9 +13,20 @@ class OffreAdmin(admin.ModelAdmin):
         'date_limite',
         'statut',
     )
-    list_filter = ('type_contrat', 'statut')
+    list_filter = ('statut', 'type_contrat')
     search_fields = ('titre', 'entreprise')
     ordering = ('-date_creation',)
+    actions = ('valider_offres', 'cloturer_offres')
+
+    @admin.action(description="Valider et publier les offres sélectionnées")
+    def valider_offres(self, request, queryset):
+        nombre = queryset.filter(statut='en_attente').update(statut='ouverte')
+        self.message_user(request, f"{nombre} offre(s) validée(s) et publiée(s).")
+
+    @admin.action(description="Clôturer les offres sélectionnées")
+    def cloturer_offres(self, request, queryset):
+        nombre = queryset.exclude(statut='fermee').update(statut='fermee')
+        self.message_user(request, f"{nombre} offre(s) clôturée(s).")
 
 
 @admin.register(ProfilEtudiant)

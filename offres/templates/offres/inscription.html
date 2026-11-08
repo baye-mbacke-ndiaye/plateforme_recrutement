@@ -1,90 +1,32 @@
+{% extends "offres/base.html" %}
 
-{% load static %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Créer un compte | TalentConnect</title>
-    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
-</head>
+{% block title %}Créer un compte | KayJoop{% endblock %}
 
-<body class="page-inscription">
+{% block content %}
+<main class="auth">
+    {% include "offres/partials/auth_side.html" with variant="etudiant" %}
 
-    <header class="entete">
-        <a class="logo" href="{% url 'rechercher_offres' %}">
-            Talent<span>Connect</span>
-        </a>
-        <a class="lien-retour" href="{% url 'connexion' %}">
-            Déjà inscrit ? Se connecter
-        </a>
-    </header>
+    <section class="auth-main">
+        <div class="auth-card">
+            <h1>Créer votre compte</h1>
+            <p class="auth-intro">Rejoignez KayJoop pour découvrir des offres d'emploi, de stage et d'alternance.</p>
 
-    {% include "offres/partials/notifications.html" %}
+            {% include "offres/partials/auth_switch.html" with actif="etudiant" %}
 
-    <main class="zone-inscription">
-        <section class="carte-inscription">
+            {% if form.non_field_errors %}
+                <div class="alert" role="alert">{{ form.non_field_errors }}</div>
+            {% endif %}
 
-            <div class="logo-icone" aria-hidden="true">T</div>
-
-            <h1>Rejoignez TalentConnect</h1>
-            <p class="texte-intro">
-                Créez votre compte pour découvrir des offres
-                d’emploi, de stage et d’alternance.
-            </p>
-
-            <form method="post" class="formulaire-inscription">
+            <form method="post" class="form form-grid" novalidate>
                 {% csrf_token %}
-
-                {% if form.non_field_errors %}
-                    <div class="message-erreur" role="alert">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-
                 {% for field in form %}
-                    <div class="groupe-champ">
-                        {{ field.label_tag }}
-                        {{ field }}
-
-                        {% if field.help_text %}
-                            <small class="aide-champ">
-                                {{ field.help_text|safe }}
-                            </small>
-                        {% endif %}
-
-                        {% for error in field.errors %}
-                            <small class="erreur-champ" role="alert">
-                                {{ error }}
-                            </small>
-                        {% endfor %}
-                    </div>
+                    {% include "offres/partials/field.html" with field=field %}
                 {% endfor %}
-
-                <button type="submit" class="bouton-principal">
-                    Créer mon compte
-                </button>
+                <button type="submit" class="btn btn-primary btn-block">Créer mon compte</button>
             </form>
 
-            <div class="separateur"></div>
-
-            <p class="texte-inscription">
-                Vous avez déjà un compte ?
-                <a href="{% url 'connexion' %}">Se connecter</a>
-            </p>
-            <p class="texte-inscription texte-inscription-secondaire">
-                Vous recrutez ?
-                <a href="{% url 'inscription_entreprise' %}">
-                    Créer un compte entreprise
-                </a>
-            </p>
-
-        </section>
-    </main>
-
-    <footer class="pied-page">
-        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
-    </footer>
-
-</body>
-</html>
+            <p class="auth-alt">Vous avez déjà un compte ? <a href="{% url 'connexion' %}">Se connecter</a></p>
+        </div>
+    </section>
+</main>
+{% endblock %}

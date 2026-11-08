@@ -144,23 +144,23 @@ class ProfilEtudiantForm(forms.ModelForm):
             }),
         }
 
-    # Vérifie que l'e-mail n'appartient pas à un autre étudiant.
+    # Vérifie que l'e-mail n'appartient pas à un autre compte.
     def clean_email(self):
-    # Récupérer l'adresse e-mail et la normaliser.
-      email = self.cleaned_data["email"].strip().lower()
+        # Récupérer l'adresse e-mail et la normaliser.
+        email = self.cleaned_data["email"].strip().lower()
 
-     # Vérifier que l'adresse n'appartient pas à un autre compte utilisateur.
-      if User.objects.filter(
-        email__iexact=email
-      ).exclude(pk=self.instance.utilisateur_id).exists():
-        raise forms.ValidationError(
-            "Cette adresse e-mail est déjà utilisée par un autre compte."
-        )
+        # Vérifier que l'adresse n'appartient pas à un autre compte utilisateur.
+        if User.objects.filter(
+            email__iexact=email
+        ).exclude(pk=self.instance.utilisateur_id).exists():
+            raise forms.ValidationError(
+                "Cette adresse e-mail est déjà utilisée par un autre compte."
+            )
 
         # Vérifier que l'adresse n'appartient pas à un autre profil étudiant.
         doublon = ProfilEtudiant.objects.filter(
             email__iexact=email
-    ).exclude(pk=self.instance.pk).exists()
+        ).exclude(pk=self.instance.pk).exists()
 
         if doublon:
             raise forms.ValidationError(
@@ -203,31 +203,11 @@ class ProfilEtudiantForm(forms.ModelForm):
         return fichier
 
 
-class ProfilEtudiantForm(forms.ModelForm):
-    # Cette classe définit le formulaire de modification du profil étudiant.
-
-    class Meta:
-        # On indique à Django le modèle utilisé par ce formulaire.
-        model = ProfilEtudiant
-
-        # On choisit les champs qui seront affichés dans le formulaire.
-        fields = [
-            "nom_complet",
-            "email",
-            "telephone",
-            "niveau_etudes",
-            "filiere",
-            "annee_etudes",
-            "competences",
-            "cv",
-        ]
-
-
 class CandidatureForm(forms.ModelForm):
     cv = forms.FileField(
         required=True,
         label="CV (PDF, 5 Mo maximum)",
-        help_text="Dépose ton CV au format PDF."
+        help_text="Déposez votre CV au format PDF."
     )
 
     class Meta:
@@ -240,7 +220,7 @@ class CandidatureForm(forms.ModelForm):
             'lettre_motivation': forms.Textarea(attrs={
                 'rows': 6,
                 'placeholder': (
-                    "Présente brièvement ta motivation "
+                    "Présentez brièvement votre motivation "
                     "pour ce poste..."
                 ),
             }),
@@ -359,7 +339,7 @@ class OffreForm(forms.ModelForm):
     # Permet à l'entreprise de choisir une date limite dans un calendrier.
     date_limite = forms.DateField(
         label="Date limite de candidature",
-        widget=forms.DateInput(attrs={"type": "date"})
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
     )
 
     class Meta:
@@ -380,7 +360,7 @@ class OffreForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={
                 "rows": 6,
-                "placeholder": "Décris le poste, les missions et les compétences recherchées..."
+                "placeholder": "Décrivez le poste, les missions et les compétences recherchées..."
             }),
         }
 

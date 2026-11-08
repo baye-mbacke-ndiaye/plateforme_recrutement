@@ -1,134 +1,67 @@
+{% extends "offres/base.html" %}
 
-{% load static %}
+{% block title %}Candidatures | KayJoop{% endblock %}
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidatures | TalentConnect</title>
-    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
-</head>
+{% block content %}
+<main class="page page-narrow">
+    <a href="{% url 'tableau_bord_entreprise' %}" class="back">← Retour à mes offres</a>
 
-<body class="page-tableau-bord-entreprise">
-
-    {% include "offres/partials/notifications.html" %}
-
-    <header class="entete entreprise-header">
-        <a class="logo" href="{% url 'rechercher_offres' %}">
-            Talent<span>Connect</span>
-        </a>
-
-        <nav>
-            <a href="{% url 'tableau_bord_entreprise' %}">Mon espace</a>
-            <a href="{% url 'publier_offre' %}">Publier une offre</a>
-            <form method="post" action="{% url 'deconnexion' %}">
-                {% csrf_token %}
-                <button type="submit">Déconnexion</button>
-            </form>
-        </nav>
-    </header>
-
-    <main class="dashboard-entreprise">
-
-        <section class="dashboard-intro">
-            <p class="dashboard-label">GESTION DES CANDIDATURES</p>
+    <div class="page-head">
+        <div>
+            <span class="eyebrow">Gestion des candidatures</span>
             <h1>{{ offre.titre }}</h1>
-            <p>Entreprise : {{ profil.nom }}</p>
-            <p>{{ candidatures|length }} candidature(s) reçue(s)</p>
-        </section>
+            <p class="page-sub">{{ profil.nom }} · {{ candidatures|length }} candidature{{ candidatures|length|pluralize }} reçue{{ candidatures|length|pluralize }}</p>
+        </div>
+    </div>
 
-        <section class="dashboard-offres">
+    {% if candidatures %}
+        <div class="candidate-list">
+            {% for candidature in candidatures %}
+                <article class="candidate">
+                    <div class="candidate-top">
+                        <h3>{{ candidature.etudiant.nom_complet }}</h3>
+                        {% if candidature.statut == 'acceptee' %}<span class="badge badge-ok">{{ candidature.get_statut_display }}</span>
+                        {% elif candidature.statut == 'refusee' %}<span class="badge badge-danger">{{ candidature.get_statut_display }}</span>
+                        {% else %}<span class="badge badge-wait">{{ candidature.get_statut_display }}</span>{% endif %}
+                    </div>
 
-            <div class="dashboard-titre">
-                <h2>Liste des candidats</h2>
-                <a href="{% url 'tableau_bord_entreprise' %}">
-                    Retour au tableau de bord
-                </a>
-            </div>
+                    <div class="candidate-contact">
+                        <span>{{ candidature.etudiant.email }}</span>
+                        <span>{{ candidature.etudiant.telephone }}</span>
+                        <span>Reçue le {{ candidature.date_candidature|date:"d/m/Y à H:i" }}</span>
+                    </div>
 
-            {% if candidatures %}
+                    {% if candidature.lettre_motivation %}
+                        <div class="candidate-letter">
+                            <strong>Lettre de motivation</strong>
+                            {{ candidature.lettre_motivation|linebreaksbr }}
+                        </div>
+                    {% endif %}
 
-                <div class="dashboard-liste">
+                    <form method="post" action="{% url 'modifier_statut_candidature' candidature.id %}" class="status-form">
+                        {% csrf_token %}
+                        <label for="statut-{{ candidature.id }}" class="sr-only">Statut de la candidature</label>
+                        <select name="statut" id="statut-{{ candidature.id }}">
+                            {% for valeur, libelle in statuts %}
+                                <option value="{{ valeur }}"{% if candidature.statut == valeur %} selected{% endif %}>{{ libelle }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-dark btn-sm">Enregistrer le statut</button>
 
-                    {% for candidature in candidatures %}
-
-                        <article class="dashboard-offre-card">
-
-                            <h3>{{ candidature.etudiant.nom_complet }}</h3>
-
-                            <p>Email : {{ candidature.etudiant.email }}</p>
-                            <p>Téléphone : {{ candidature.etudiant.telephone }}</p>
-
-                            <p>
-                                Date :
-                                {{ candidature.date_candidature|date:"d/m/Y à H:i" }}
-                            </p>
-
-                            <p>
-                                Statut actuel :
-                                <strong>{{ candidature.get_statut_display }}</strong>
-                            </p>
-
-                            <form method="post"
-                                  action="{% url 'modifier_statut_candidature' candidature.id %}"
-                                  class="form-statut-candidature">
-
-                                {% csrf_token %}
-
-                                <label for="statut-{{ candidature.id }}">
-                                    Modifier le statut :
-                                </label>
-
-                                <select name="statut" id="statut-{{ candidature.id }}">
-                                    {% for valeur, libelle in statuts %}
-                                        <option value="{{ valeur }}"
-                                            {% if candidature.statut == valeur %}selected{% endif %}>
-                                            {{ libelle }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-
-                                <button type="submit">Enregistrer</button>
-                            </form>
-
-                            {% if candidature.lettre_motivation %}
-                                <h4>Lettre de motivation</h4>
-                                <p>{{ candidature.lettre_motivation|linebreaksbr }}</p>
-                            {% endif %}
-
-                            {% if candidature.cv %}
-                                <a href="{{ candidature.cv.url }}"
-                                   target="_blank"
-                                   rel="noopener">
-                                    Consulter le CV
-                                </a>
-                            {% else %}
-                                <p>Aucun CV fourni.</p>
-                            {% endif %}
-
-                        </article>
-
-                    {% endfor %}
-
-                </div>
-
-            {% else %}
-
-                <div class="dashboard-vide">
-                    <h3>Aucune candidature reçue</h3>
-                    <p>Les candidatures apparaîtront ici lorsque des étudiants postuleront.</p>
-                </div>
-
-            {% endif %}
-
-        </section>
-
-    </main>
-
-    <footer class="pied-page espace-footer">
-        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
-    </footer>
-
-</body>
-</html>
+                        {% if candidature.cv %}
+                            <a href="{{ candidature.cv.url }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Consulter le CV</a>
+                        {% else %}
+                            <span class="muted">Aucun CV fourni</span>
+                        {% endif %}
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty">
+            <h3>Aucune candidature reçue</h3>
+            <p>Les candidatures apparaîtront ici lorsque des étudiants postuleront.</p>
+        </div>
+    {% endif %}
+</main>
+{% endblock %}

@@ -1,85 +1,28 @@
+{% extends "offres/base.html" %}
 
-    {% load static %}
+{% block title %}Mon profil | KayJoop{% endblock %}
 
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mon profil | TalentConnect</title>
-        <link rel="stylesheet" href="{% static 'offres/style.css' %}?v=2">
-        
+{% block content %}
+<main class="page page-narrow">
 
-
-    </head>
-
-    <body class="page-profil-etudiant">
-
-        {% include "offres/partials/notifications.html" %}
-
-        <header class="entete">
-            <a class="logo" href="{% url 'rechercher_offres' %}">
-                Talent<span>Connect</span>
-            </a>
-
-            <nav aria-label="Navigation principale">
-                <a href="{% url 'rechercher_offres' %}">Accueil</a>
-                <a href="{% url 'mes_candidatures' %}">Mes candidatures</a>
-                <a class="lien-actif" href="{% url 'modifier_profil_etudiant' %}" aria-current="page">Mon profil</a>
-
-                <form method="post" action="{% url 'deconnexion' %}">
-                    {% csrf_token %}
-                    <button type="submit">Déconnexion</button>
-                </form>
-            </nav>
-        </header>
-
-        <main class="profil-container">
-
-        <section class="profil-intro">
-            <span class="profil-label">ESPACE ÉTUDIANT</span>
+    <div class="page-head">
+        <div>
+            <span class="eyebrow">Espace candidat</span>
             <h1>Mon profil</h1>
-            <p>Gère tes informations personnelles et professionnelles.</p>
-        </section>
+            <p class="page-sub">Gérez vos informations personnelles et professionnelles.</p>
+        </div>
+    </div>
 
-        
+    <section class="card">
+        {% if form.non_field_errors %}<div class="alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
 
-            <section class="profil-formulaire">
-
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    {% for field in form %}
-                        <div class="form-group">
-
-                            <label for="{{ field.id_for_label }}">
-                                {{ field.label }}
-                            </label>
-
-                            {{ field }}
-
-                            {% if field.errors %}
-                                <div class="error-message">
-                                    {{ field.errors }}
-                                </div>
-                            {% endif %}
-
-                        </div>
-                    {% endfor %}
-
-                    <button type="submit" class="btn-profil">
-                        Enregistrer les modifications
-                    </button>
-
-                </form>
-
-            </section>
-
-        </main>
-
-        <footer class="pied-page">
-            © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
-        </footer>
-
-    </body>
-    </html>
+        <form method="post" enctype="multipart/form-data" class="form form-grid">
+            {% csrf_token %}
+            {% for field in form %}
+                {% include "offres/partials/field.html" with field=field %}
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-block">Enregistrer les modifications</button>
+        </form>
+    </section>
+</main>
+{% endblock %}

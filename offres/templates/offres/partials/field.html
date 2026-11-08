@@ -1,0 +1,18 @@
+{# Un champ de formulaire. Paramètre : field #}
+<div class="field{% if field.errors %} has-error{% endif %}">
+    {{ field.label_tag }}
+
+    {% if field.field.widget.input_type == "password" %}
+        <div class="password">
+            {{ field }}
+            <button type="button" class="password-toggle" data-toggle-password aria-pressed="false"
+                    aria-label="Afficher le mot de passe">Afficher</button>
+        </div>
+    {% else %}
+        {{ field }}
+    {% endif %}
+
+    {% if field.help_text %}<small class="help">{{ field.help_text|safe }}</small>{% endif %}
+
+    {% for error in field.errors %}<small class="error" role="alert">{{ error }}</small>{% endfor %}
+</div>

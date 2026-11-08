@@ -1,225 +1,84 @@
+{% extends "offres/base.html" %}
 
-{% load static %}
+{% block title %}Mes offres | KayJoop{% endblock %}
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block content %}
+<main class="page">
 
-    <title>Tableau de bord entreprise | TalentConnect</title>
-
-    <link rel="stylesheet" href="{% static 'offres/style.css' %}">
-</head>
-
-<body class="page-tableau-bord-entreprise">
-
-    {% include "offres/partials/notifications.html" %}
-
-    <header class="entete entreprise-header">
-
-        <a class="logo" href="{% url 'rechercher_offres' %}">
-            Talent<span>Connect</span>
-        </a>
-
-        <nav aria-label="Navigation principale">
-            <a href="{% url 'tableau_bord_entreprise' %}" aria-current="page">
-                Mon espace
-            </a>
-
-            <a href="{% url 'publier_offre' %}">
-                Publier une offre
-            </a>
-
-            <a href="{% url 'rechercher_offres' %}">
-                Voir les offres
-            </a>
-
-            <form method="post" action="{% url 'deconnexion' %}">
-                {% csrf_token %}
-                <button type="submit">Déconnexion</button>
-            </form>
-        </nav>
-
-    </header>
-
-
-    <main class="dashboard-entreprise">
-
-        <!-- Présentation de l'entreprise -->
-        <section class="dashboard-intro">
-
-            <p class="dashboard-label">ESPACE ENTREPRISE</p>
-
-            <h1>Bienvenue, {{ profil.nom }}</h1>
-
-            <p>
-                Gérez vos offres, suivez vos candidatures
-                et trouvez les meilleurs talents.
+    <div class="page-head">
+        <div>
+            <h1>Mes offres</h1>
+            <p class="page-sub">
+                {{ profil.nom }} · {{ offres|length }} offre{{ offres|length|pluralize }}
+                · {{ nombre_candidatures }} candidature{{ nombre_candidatures|pluralize }} reçue{{ nombre_candidatures|pluralize }}
             </p>
+        </div>
+        <a href="{% url 'publier_offre' %}" class="btn btn-primary btn-lg">Publier une offre</a>
+    </div>
 
-            <a href="{% url 'publier_offre' %}" class="btn-publier">
-                + Publier une offre
-            </a>
+    {% if offres %}
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Offre</th>
+                    <th scope="col">État</th>
+                    <th scope="col">Date limite</th>
+                    <th scope="col">Candidatures</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offre in offres %}
+                <tr>
+                    <td data-label="Offre">
+                        <a href="{% url 'detail_offre' offre.id %}" class="cell-link">{{ offre.titre }}</a>
+                        <span class="cell-sub">{{ offre.get_type_contrat_display }} — {{ offre.localisation }}</span>
+                    </td>
 
-        </section>
+                    <td data-label="État">
+                        {% if offre.statut == "en_attente" %}
+                            <span class="badge badge-wait">En attente de validation</span>
+                        {% elif offre.statut == "fermee" %}
+                            <span class="badge badge-closed">Clôturée</span>
+                        {% elif offre.date_limite < date_aujourdhui %}
+                            <span class="badge badge-danger">Expirée</span>
+                        {% else %}
+                            <span class="badge badge-ok">Publiée</span>
+                        {% endif %}
+                    </td>
 
+                    <td data-label="Date limite">{{ offre.date_limite|date:"j M Y" }}</td>
 
-        <!-- Statistiques générales -->
-        <section class="dashboard-statistiques">
+                    <td data-label="Candidatures">
+                        <a href="{% url 'candidatures_offre' offre.id %}" class="cell-link" title="Voir les candidatures">{{ offre.nombre_candidatures }}</a>
+                    </td>
 
-            <div class="stat-card">
-                <span class="stat-libelle">Mes offres</span>
+                    <td class="cell-actions">
+                        <div class="row-actions">
+                            <a href="{% url 'modifier_offre' offre.id %}" class="btn btn-outline btn-sm">Modifier</a>
+                            {% if offre.statut != "fermee" %}
+                            <form method="post" action="{% url 'cloturer_offre' offre.id %}"
+                                  data-confirm="Clôturer cette offre ? Elle ne sera plus visible par les candidats.">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Clôturer</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-                <strong>{{ offres|length }}</strong>
+    {% else %}
+    <div class="empty">
+        <h3>Aucune offre pour le moment</h3>
+        <p>Publiez votre première annonce pour recevoir des candidatures.</p>
+        <a href="{% url 'publier_offre' %}" class="btn btn-primary">Publier ma première offre</a>
+    </div>
+    {% endif %}
 
-                <span class="stat-description">
-                    offre(s) publiée(s)
-                </span>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-libelle">Candidatures reçues</span>
-
-                <strong>{{ nombre_candidatures }}</strong>
-
-                <span class="stat-description">
-                    sur toutes vos offres
-                </span>
-            </div>
-
-        </section>
-
-
-        <!-- Liste des offres de l'entreprise -->
-        <section class="dashboard-offres">
-
-            <div class="dashboard-titre">
-                <div>
-                    <p class="dashboard-label">GESTION</p>
-                    <h2>Mes offres publiées</h2>
-                </div>
-
-                <a href="{% url 'publier_offre' %}" class="btn-publier">
-                    + Nouvelle offre
-                </a>
-            </div>
-
-
-            {% if offres %}
-
-                <div class="dashboard-liste">
-
-                    {% for offre in offres %}
-
-                        <article class="dashboard-offre-card">
-
-                            <!-- Type et statut -->
-                            <div class="dashboard-offre-entete">
-
-                                <span class="offre-type">
-                                    {{ offre.get_type_contrat_display }}
-                                </span>
-
-                                {% if offre.statut == "fermee" %}
-
-                                    <span class="offre-statut offre-statut-fermee">
-                                        {{ offre.get_statut_display }}
-                                    </span>
-
-                                {% elif offre.date_limite < date_aujourdhui %}
-
-                                    <span class="offre-statut offre-statut-expiree">
-                                        Expirée
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="offre-statut offre-statut-ouverte">
-                                        {{ offre.get_statut_display }}
-                                    </span>
-
-                                {% endif %}
-
-                            </div>
-
-
-                            <!-- Informations de l'offre -->
-                            <h3>{{ offre.titre }}</h3>
-
-                            <p class="dashboard-offre-entreprise">
-                                {{ profil.nom }}
-                            </p>
-
-                            <dl class="dashboard-offre-infos">
-
-                                <div>
-                                    <dt>Lieu</dt>
-                                    <dd>{{ offre.localisation }}</dd>
-                                </div>
-
-                                <div>
-                                    <dt>Date limite</dt>
-                                    <dd>
-                                        {{ offre.date_limite|date:"d/m/Y" }}
-                                    </dd>
-                                </div>
-
-                                <div>
-                                    <dt>Candidatures</dt>
-                                    <dd>
-                                        {{ offre.nombre_candidatures }}
-                                    </dd>
-                                </div>
-
-                            </dl>
-
-
-                            <!-- Actions de l'entreprise -->
-                            <div class="dashboard-offre-actions">
-
-                                <a href="{% url 'candidatures_offre' offre.id %}">
-                                    Voir les candidatures
-                                </a>
-
-                            </div>
-
-                        </article>
-
-                    {% endfor %}
-
-                </div>
-
-
-            {% else %}
-
-                <!-- Message si aucune offre n'existe -->
-                <div class="dashboard-vide">
-
-                    <h3>Aucune offre pour le moment</h3>
-
-                    <p>
-                        Vous n'avez pas encore publié d'offre.
-                        Publiez votre première annonce pour recevoir
-                        des candidatures.
-                    </p>
-
-                    <a href="{% url 'publier_offre' %}" class="btn-publier">
-                        Publier ma première offre
-                    </a>
-
-                </div>
-
-            {% endif %}
-
-        </section>
-
-    </main>
-
-
-    <footer class="pied-page espace-footer">
-        © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
-    </footer>
-
-</body>
-</html>
+</main>
+{% endblock %}

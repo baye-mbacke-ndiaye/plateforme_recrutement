@@ -1,133 +1,56 @@
+{% extends "offres/base.html" %}
 
-    {% load static %}
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ offre.titre }} | Détail de l'offre</title>
-        <link rel="stylesheet" href="{% static 'offres/style.css' %}">
-    </head>
-    <body class="page-detail">
+{% block title %}{{ offre.titre }} | KayJoop{% endblock %}
 
-        {% include "offres/partials/notifications.html" %}
-        <header class="entete detail-header">
-            <a href="{% url 'rechercher_offres' %}" class="detail-logo">
-                Talent<span>Connect</span>
-            </a>
+{% block content %}
+<main class="page page-narrow detail">
+    <a href="{% url 'rechercher_offres' %}" class="back">← Retour aux offres</a>
 
-            <nav aria-label="Navigation principale">
-                <a href="{% url 'rechercher_offres' %}">Accueil</a>
-                {% if user.is_authenticated %}
-                    {% if user.profil_entreprise %}
-                        <a href="{% url 'tableau_bord_entreprise' %}">Mon espace</a>
-                        <a href="{% url 'publier_offre' %}">Publier une offre</a>
-                    {% elif user.profil_etudiant %}
-                        <a href="{% url 'mes_candidatures' %}">Mes candidatures</a>
-                    {% endif %}
-                    <form method="post" action="{% url 'deconnexion' %}" class="rd-nav-logout">
-                        {% csrf_token %}
-                        <button type="submit" class="rd-nav-logout-button">
-                            Déconnexion
-                        </button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'connexion' %}">Connexion</a>
-                    <a href="{% url 'inscription' %}">Créer un compte</a>
-                {% endif %}
-            </nav>
-        </header>
+    <article class="card">
+        <span class="badge badge-info">{{ offre.get_type_contrat_display }}</span>
 
-        <main class="detail-container">
-            <a href="{% url 'rechercher_offres' %}" class="detail-retour">
-                ← Retour aux offres
-            </a>
+        <h1>{{ offre.titre }}</h1>
+        <p class="detail-company">{{ offre.entreprise }}</p>
 
-            <article class="detail-carte">
-                <div class="detail-badge">
-                    {{ offre.get_type_contrat_display }}
-                </div>
-                {% if not offre_active %}
-                    <p class="detail-message">
-                        Cette offre n'accepte plus de candidatures.
-                    </p>
-                {% endif %}
-
-                <h1>{{ offre.titre }}</h1>
-
-                <p class="detail-entreprise">
-                    {{ offre.entreprise }}
-                </p>
-
-                <div class="detail-infos">
-                    <div>
-                        <strong>Localisation</strong>
-                        <p>{{ offre.localisation|default:"Non précisée" }}</p>
-                    </div>
-
-                    <div>
-                        <strong>Date limite</strong>
-                        <p>
-                            {% if offre.date_limite %}
-                                {{ offre.date_limite|date:"d/m/Y" }}
-                            {% else %}
-                                Non précisée
-                            {% endif %}
-                        </p>
-                    </div>
-
-                    <div>
-                        <strong>Publié le</strong>
-                        <p>{{ offre.date_creation|date:"d/m/Y" }}</p>
-                    </div>
-                </div>
-
-                <hr>
-
-                <section class="detail-description">
-                    <h2>Description de l'offre</h2>
-                    <p>{{ offre.description|linebreaksbr }}</p>
-                </section>
-
-                
-            
-    <div class="detail-actions">
-        {% if peut_postuler %}
-            <a href="{% url 'postuler' offre.id %}" class="detail-bouton">
-                Postuler à cette offre
-            </a>
-        {% elif deja_postule %}
-            <p class="detail-message">
-                Vous avez déjà envoyé une candidature pour cette offre.
-            </p>
-            <a href="{% url 'mes_candidatures' %}" class="detail-bouton">
-                Consulter mes candidatures
-            </a>
-        {% elif not offre_active %}
-            <p class="detail-message">
-                La date limite est passée ou cette offre a été fermée.
-            </p>
-        {% elif user.is_authenticated %}
-            <p class="detail-message">
-                La candidature est réservée aux comptes étudiants.
-            </p>
-        {% else %}
-            <p class="detail-message">
-                Connectez-vous pour déposer votre candidature.
-            </p>
-            <a href="{% url 'connexion' %}" class="detail-bouton">
-                Se connecter pour postuler
-            </a>
+        {% if not offre_active %}
+            <p class="alert" role="status" style="margin:16px 0 0">Cette offre n'accepte plus de candidatures.</p>
         {% endif %}
-    </div>
 
+        <div class="detail-infos">
+            <div class="detail-info">
+                <span>Localisation</span>
+                <strong>{{ offre.localisation|default:"Non précisée" }}</strong>
+            </div>
+            <div class="detail-info">
+                <span>Date limite</span>
+                <strong>{% if offre.date_limite %}{{ offre.date_limite|date:"d/m/Y" }}{% else %}Non précisée{% endif %}</strong>
+            </div>
+            <div class="detail-info">
+                <span>Publié le</span>
+                <strong>{{ offre.date_creation|date:"d/m/Y" }}</strong>
+            </div>
+        </div>
 
-            </article>
-        </main>
+        <section class="detail-description">
+            <h2>Description de l'offre</h2>
+            <p>{{ offre.description|linebreaksbr }}</p>
+        </section>
 
-        <footer class="pied-page">
-            © {% now "Y" %} TalentConnect — Construisez votre avenir professionnel.
-        </footer>
-
-    </body>
-    </html>
+        <div class="detail-actions">
+            {% if peut_postuler %}
+                <a href="{% url 'postuler' offre.id %}" class="btn btn-primary btn-lg">Postuler à cette offre</a>
+            {% elif deja_postule %}
+                <p>Vous avez déjà envoyé une candidature pour cette offre.</p>
+                <a href="{% url 'mes_candidatures' %}" class="btn btn-primary">Consulter mes candidatures</a>
+            {% elif not offre_active %}
+                <p>La date limite est passée ou cette offre a été fermée.</p>
+            {% elif user.is_authenticated %}
+                <p>La candidature est réservée aux comptes étudiants.</p>
+            {% else %}
+                <p>Connectez-vous pour déposer votre candidature.</p>
+                <a href="{% url 'connexion' %}" class="btn btn-primary">Se connecter pour postuler</a>
+            {% endif %}
+        </div>
+    </article>
+</main>
+{% endblock %}

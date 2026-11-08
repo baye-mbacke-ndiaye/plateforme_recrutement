@@ -1,0 +1,62 @@
+{% load static %}
+<footer class="footer">
+    <div class="footer-inner">
+
+        <div class="footer-brand">
+            <a href="{% url 'rechercher_offres' %}" class="logo">
+                <img src="{% static 'offres/logo-kayjoop.svg' %}" alt="" width="38" height="38">
+                <span>Kay<span class="logo-accent">Joop</span></span>
+            </a>
+            <p>La plateforme de recrutement qui connecte les talents aux meilleures opportunités.</p>
+        </div>
+
+        <nav class="footer-col" aria-label="Navigation du site">
+            <h3>Navigation</h3>
+            <ul>
+                <li><a href="{% url 'rechercher_offres' %}">Accueil</a></li>
+                <li><a href="{% url 'rechercher_offres' %}?tous=1#offres">Offres d'emploi</a></li>
+                <li><a href="{% url 'rechercher_offres' %}?type=stage#offres">Stages</a></li>
+                <li><a href="{% url 'rechercher_offres' %}?type=alternance#offres">Alternances</a></li>
+            </ul>
+        </nav>
+
+        <nav class="footer-col" aria-label="Espace candidat">
+            <h3>Candidats</h3>
+            <ul>
+                {% if user.is_authenticated and user.profil_etudiant %}
+                    <li><a href="{% url 'mes_candidatures' %}">Mes candidatures</a></li>
+                    <li><a href="{% url 'modifier_profil_etudiant' %}">Mon profil</a></li>
+                {% elif not user.is_authenticated %}
+                    <li><a href="{% url 'inscription' %}">Créer un compte</a></li>
+                    <li><a href="{% url 'connexion' %}">Connexion</a></li>
+                {% else %}
+                    <li><a href="{% url 'rechercher_offres' %}">Rechercher une offre</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <nav class="footer-col" aria-label="Espace entreprise">
+            <h3>Entreprises</h3>
+            <ul>
+                {% if user.is_authenticated and user.profil_entreprise %}
+                    <li><a href="{% url 'tableau_bord_entreprise' %}">Mes offres</a></li>
+                    <li><a href="{% url 'publier_offre' %}">Publier une offre</a></li>
+                {% elif not user.is_authenticated %}
+                    <li><a href="{% url 'inscription_entreprise' %}">Inscrire mon entreprise</a></li>
+                    <li><a href="{% url 'connexion' %}">Espace entreprise</a></li>
+                {% else %}
+                    <li><a href="{% url 'inscription_entreprise' %}">Inscrire mon entreprise</a></li>
+                {% endif %}
+                {% if user.is_staff %}
+                    <li><a href="{% url 'gestion_tableau_bord' %}">Administration</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+
+    </div>
+
+    <div class="footer-bottom">
+        <span>© {% now "Y" %} KayJoop. Tous droits réservés.</span>
+        <a href="#" class="totop" data-top aria-label="Remonter en haut de la page">↑</a>
+    </div>
+</footer>

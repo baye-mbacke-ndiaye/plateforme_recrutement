@@ -1,0 +1,7 @@
+{# Sélecteur de type de compte. Paramètre : actif (etudiant | entreprise) #}
+<div class="switch" role="tablist" aria-label="Type de compte">
+    <a href="{% url 'inscription' %}" role="tab" aria-selected="{% if actif == 'etudiant' %}true{% else %}false{% endif %}"
+       class="{% if actif == 'etudiant' %}is-active{% endif %}">Je cherche un emploi</a>
+    <a href="{% url 'inscription_entreprise' %}" role="tab" aria-selected="{% if actif == 'entreprise' %}true{% else %}false{% endif %}"
+       class="{% if actif == 'entreprise' %}is-active{% endif %}">Je recrute</a>
+</div>
