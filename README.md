@@ -12,13 +12,11 @@ KayJoop met en relation les étudiants et les entreprises pour la publication d�
 
 ## 2. Installation sous Windows (PowerShell)
 
-Ouvrir le terminal dans le dossier qui contient `manage.py` :
+Ouvrir le terminal dans le dossier qui contient `manage.py` (vérifier avec `dir manage.py`) :
 
 ```powershell
-cd plateforme_recrutement
-
 # Créer l'environnement virtuel une seule fois
-python -m venv .venv
+py -m venv .venv
 
 # Activer l'environnement virtuel
 .venv\Scripts\Activate.ps1
@@ -45,10 +43,13 @@ Ouvrir http://127.0.0.1:8000/
 ## 3. Rôles et fonctionnalités
 
 | Rôle | Fonctionnalités |
-|---|---|
+==============================================================
 | Étudiant | Inscription, connexion, profil, CV, recherche et filtres, candidature, suivi des statuts et notifications |
+==============================================================
 | Entreprise | Inscription, profil, publication immédiate, modification et clôture de ses offres, consultation des candidatures, changement de statut et notifications |
+==============================================================
 | Administrateur | Tableau de bord, statistiques, gestion des offres, des comptes et consultation des candidatures |
+===============================================================
 
 Les pages et actions privées vérifient le rôle et la propriété des données. Une entreprise ne peut gérer que ses propres offres et candidatures.
 
@@ -82,13 +83,10 @@ Les pages et actions privées vérifient le rôle et la propriété des données
 
 Les mots de passe ne sont jamais affichés en clair. L'administration intégrée peut générer un mot de passe temporaire pour un compte autorisé ; celui-ci est affiché une seule fois.
 
-## 6. Documentation du projet
+## 6. Documentation
 
-Le dossier `docs/` contient :
-- `ANALYSE_ET_UML.md` : acteurs, règles de gestion, associations et diagramme UML ;
-- `PLAN_DE_TEST.md` : scénarios de vérification avant la démonstration.
-
-Les captures d'écran réelles doivent être ajoutées après exécution et vérification de l'application. Ne pas utiliser de captures fictives.
+Le dossier de présentation complet (analyse des besoins, règles de gestion, diagrammes UML, sécurité, tests et captures d'écran) est disponible ici :
+[docs/KayJoop_Dossier_de_presentation.pdf](docs/KayJoop_Dossier_de_presentation.pdf)
 
 ## 7. Tests
 
@@ -99,7 +97,7 @@ python manage.py check
 python manage.py test offres
 ```
 
-Les tests automatisés couvrent notamment la publication immédiate, les droits d'accès, la clôture, les candidatures, les notifications et l'administration. Le résultat doit être vérifié sur l'environnement local après installation des dépendances.
+Les 49 tests automatisés couvrent notamment la publication immédiate, les droits d'accès, la clôture, les candidatures, les notifications et l'administration. Le résultat doit être vérifié sur l'environnement local après installation des dépendances.
 
 ## 8. Configuration de production
 
@@ -135,7 +133,7 @@ offres/
   tests.py                      Tests automatisés
   templates/offres/             Pages et composants HTML
   static/offres/                CSS et JavaScript
-docs/                           Analyse, UML et plan de test
+docs/                           Dossier de présentation (PDF)
 media/                          Fichiers téléversés (CV)
 manage.py                       Commande de gestion Django
 requirements.txt                Dépendances Python
@@ -147,3 +145,13 @@ requirements.txt                Dépendances Python
 - **Polymorphisme** : les profils définissent chacun leur méthode `nom_affiche()`.
 - **Encapsulation** : les règles métier sont regroupées dans les modèles, par exemple `Offre.est_publique()`, `Offre.publier()`, `Offre.cloturer()`, `ProfilEtudiant.peut_postuler()` et `Candidature.changer_statut()`.
 - **Associations** : un compte possède un profil, une entreprise possède plusieurs offres, un étudiant possède plusieurs candidatures et une offre reçoit plusieurs candidatures.
+
+## 11. Auteurs
+
+- Cheikhouna Ndiaye
+- Mbacke Ndiaye
+- Ngoné Faye
+- Moussa Ndiaye
+- Mariétou Sy
+
+Projet de fin de module de Programmation Orientée Objet (Licence 3), encadré par Dr Maty SENE, année académique 2025–2026.
