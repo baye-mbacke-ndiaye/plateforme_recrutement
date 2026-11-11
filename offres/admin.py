@@ -1,6 +1,10 @@
 
 from django.contrib import admin
-from .models import Offre, ProfilEtudiant, ProfilEntreprise, Candidature
+from django.urls import reverse
+from .models import (
+    Offre, ProfilEtudiant, ProfilEntreprise, Candidature,
+    NotificationCandidature, NotificationEntreprise,
+)
 from django.utils.html import format_html
 
 @admin.register(Offre)
@@ -18,7 +22,7 @@ class OffreAdmin(admin.ModelAdmin):
     ordering = ('-date_creation',)
     actions = ('valider_offres', 'cloturer_offres')
 
-    @admin.action(description="Valider et publier les offres sélectionnées")
+    @admin.action(description="Publier les anciennes offres en attente (cas exceptionnel)")
     def valider_offres(self, request, queryset):
         nombre = queryset.filter(statut='en_attente').update(statut='ouverte')
         self.message_user(request, f"{nombre} offre(s) validée(s) et publiée(s).")
@@ -81,7 +85,29 @@ class CandidatureAdmin(admin.ModelAdmin):
     def voir_cv(self, obj):
         if obj.cv:
             return format_html(
-                '<a href="{}" target="_blank" rel="noopener noreferrer">Voir le CV</a>',
-                obj.cv.url
+                '<a href="{}">Télécharger le CV</a>',
+                reverse("telecharger_cv_candidature", args=[obj.pk])
             )
         return "Aucun CV"
+
+@admin.register(ProfilEntreprise)
+class ProfilEntrepriseAdmin(admin.ModelAdmin):
+    list_display = ("nom", "secteur", "email", "telephone", "utilisateur")
+    list_filter = ("secteur",)
+    search_fields = ("nom", "email", "telephone", "utilisateur__username")
+
+
+@admin.register(NotificationCandidature)
+class NotificationCandidatureAdmin(admin.ModelAdmin):
+    list_display = ("etudiant", "candidature", "lu", "date_creation")
+    list_filter = ("lu", "date_creation")
+    search_fields = ("etudiant__nom_complet", "message")
+    readonly_fields = ("date_creation",)
+
+
+@admin.register(NotificationEntreprise)
+class NotificationEntrepriseAdmin(admin.ModelAdmin):
+    list_display = ("entreprise", "candidature", "lu", "date_creation")
+    list_filter = ("lu", "date_creation")
+    search_fields = ("entreprise__nom", "message")
+    readonly_fields = ("date_creation",)

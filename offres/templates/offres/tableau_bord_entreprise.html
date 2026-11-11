@@ -123,7 +123,7 @@
 
                     <td data-label="État">
                         {% if offre.statut == "en_attente" %}
-                            <span class="badge badge-wait">En attente de validation</span>
+                            <span class="badge badge-wait">En attente (cas exceptionnel)</span>
                         {% elif offre.statut == "fermee" %}
                             <span class="badge badge-closed">Clôturée</span>
                         {% elif offre.date_limite < date_aujourdhui %}

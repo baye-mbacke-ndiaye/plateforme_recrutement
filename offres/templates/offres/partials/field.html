@@ -1,4 +1,7 @@
 {# Un champ de formulaire. Paramètre : field #}
+{% if field.field.widget.input_type == "hidden" %}
+    {{ field }}
+{% else %}
 <div class="field{% if field.errors %} has-error{% endif %}">
     {{ field.label_tag }}
 
@@ -26,3 +29,4 @@
 
     {% for error in field.errors %}<small class="error" role="alert">{{ error }}</small>{% endfor %}
 </div>
+{% endif %}

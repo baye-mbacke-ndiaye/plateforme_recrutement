@@ -371,7 +371,7 @@ img, svg { max-width: 100%; }
 .search {
     position: relative; z-index: 2; max-width: 1180px; width: calc(100% - 48px);
     margin: -34px auto 0; padding: 12px; background: #fff; border-radius: 16px; box-shadow: var(--shadow-lg);
-    display: grid; grid-template-columns: 1.6fr 1fr 1fr auto; gap: 10px; align-items: center;
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: center;
 }
 .search-field {
     display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px;
@@ -382,7 +382,9 @@ img, svg { max-width: 100%; }
     flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: transparent;
     font: inherit; font-size: 14.5px; color: var(--ink);
 }
-.search .btn { min-height: 48px; padding: 0 28px; }
+.search .btn { min-height: 48px; padding: 0 28px; grid-column: 4; grid-row: 1; }
+.search-text { grid-column: 1 / 4; grid-row: 1; }
+.search-field input[type="date"] { color: var(--ink); }
 
 .offers { max-width: 1280px; margin: 0 auto; padding: 44px 24px 24px; }
 .offers-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
@@ -612,7 +614,7 @@ img, svg { max-width: 100%; }
     .hero-inner, .auth { grid-template-columns: minmax(0, 1fr); }
     .hero-stats { justify-self: start; }
     .search { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .search-text, .search .btn { grid-column: 1 / -1; }
+    .search-text, .search .btn { grid-column: 1 / -1; grid-row: auto; }
     .auth-side-inner { position: static; height: auto; padding: 36px 24px; gap: 14px; }
     .auth-points, .auth-side p { display: none; }
     .auth-main { padding: 28px 16px 40px; }
@@ -647,7 +649,7 @@ img, svg { max-width: 100%; }
     .offer-grid, .benefits, .footer-inner, .form-grid, .stat-cards, .stat-cards-3,
     .detail-infos, .application-grid { grid-template-columns: minmax(0, 1fr); }
     .search { grid-template-columns: minmax(0, 1fr); width: calc(100% - 32px); margin-top: -22px; }
-    .search-text, .search .btn { grid-column: auto; }
+    .search-text, .search .btn { grid-column: auto; grid-row: auto; }
     .search .btn, .hero-actions .btn { width: 100%; }
     .footer-inner { gap: 26px; padding: 32px 20px 24px; }
     .footer-bottom { flex-wrap: wrap; padding: 16px 20px; }

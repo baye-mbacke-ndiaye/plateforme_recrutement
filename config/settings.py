@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-(ec!*byve!93e0s=1-@pnvq5_6#qjee)%7gqj39cc0=2d9p@tj"
+# En production, définir DJANGO_SECRET_KEY dans les variables d'environnement.
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "cle-de-developpement-uniquement-a-remplacer-en-production",
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG reste actif en local, mais peut être désactivé sans modifier le code.
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = []
+# Exemple : DJANGO_ALLOWED_HOSTS=kayjoop.example.com,www.kayjoop.example.com
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
+]
+
+# Domaines HTTPS autorisés pour les formulaires CSRF en production.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
 
 
 # Application definition
@@ -114,6 +131,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 MEDIA_URL = '/media/'
@@ -124,3 +142,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Renforcement des paramètres HTTP lorsque DEBUG est désactivé.
+if not DEBUG:
+    if SECRET_KEY == "cle-de-developpement-uniquement-a-remplacer-en-production":
+        raise RuntimeError("Définissez DJANGO_SECRET_KEY avant le déploiement.")
+    if not ALLOWED_HOSTS:
+        raise RuntimeError("Définissez DJANGO_ALLOWED_HOSTS avant le déploiement.")
+
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"

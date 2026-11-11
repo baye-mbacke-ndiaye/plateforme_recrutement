@@ -1,7 +1,7 @@
 {# Onglets de l'administration. Paramètres : section, nb_en_attente #}
 <nav class="tabs" aria-label="Sections de l'administration">
     <a href="{% url 'gestion_tableau_bord' %}" class="{% if section == 'tableau_bord' %}is-active{% endif %}"{% if section == 'tableau_bord' %} aria-current="page"{% endif %}>Vue d'ensemble</a>
-    <a href="{% url 'gestion_offres' %}" class="{% if section == 'offres' %}is-active{% endif %}"{% if section == 'offres' %} aria-current="page"{% endif %}>Offres{% if nb_en_attente %}<span class="tab-count" title="Offres à valider">{{ nb_en_attente }}</span>{% endif %}</a>
+    <a href="{% url 'gestion_offres' %}" class="{% if section == 'offres' %}is-active{% endif %}"{% if section == 'offres' %} aria-current="page"{% endif %}>Offres{% if nb_en_attente %}<span class="tab-count" title="Anciennes offres en attente (cas exceptionnel)">{{ nb_en_attente }}</span>{% endif %}</a>
     <a href="{% url 'gestion_utilisateurs' %}" class="{% if section == 'utilisateurs' %}is-active{% endif %}"{% if section == 'utilisateurs' %} aria-current="page"{% endif %}>Utilisateurs</a>
     <a href="{% url 'gestion_candidatures' %}" class="{% if section == 'candidatures' %}is-active{% endif %}"{% if section == 'candidatures' %} aria-current="page"{% endif %}>Candidatures</a>
 </nav>

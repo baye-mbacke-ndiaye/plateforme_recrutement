@@ -17,7 +17,7 @@
 
     <section class="stat-cards" aria-label="Résumé des candidatures">
         <div class="stat-card"><span>Total des candidatures</span><strong>{{ total_candidatures }}</strong><small>Candidature(s) enregistrée(s)</small></div>
-        <div class="stat-card"><span>En attente</span><strong>{{ candidatures_attente }}</strong><small>Demande(s) en cours</small></div>
+        <div class="stat-card"><span>Sans décision</span><strong>{{ candidatures_attente }}</strong><small>Soumise(s) ou en cours d'étude</small></div>
         <div class="stat-card"><span>Acceptées</span><strong>{{ candidatures_acceptees }}</strong><small>Réponse(s) positive(s)</small></div>
         <div class="stat-card"><span>Refusées</span><strong>{{ candidatures_refusees }}</strong><small>Demande(s) refusée(s)</small></div>
     </section>
@@ -60,7 +60,8 @@
                 <article class="application">
                     <div class="application-top">
                         <span class="badge badge-info">{{ candidature.offre.get_type_contrat_display }}</span>
-                        {% if candidature.statut == 'en_attente' %}<span class="badge badge-wait">En attente</span>
+                        {% if candidature.statut == 'en_attente' %}<span class="badge badge-wait">Soumise</span>
+                        {% elif candidature.statut == 'en_cours' %}<span class="badge badge-info">En cours d'étude</span>
                         {% elif candidature.statut == 'acceptee' %}<span class="badge badge-ok">Acceptée</span>
                         {% elif candidature.statut == 'refusee' %}<span class="badge badge-danger">Refusée</span>{% endif %}
                     </div>

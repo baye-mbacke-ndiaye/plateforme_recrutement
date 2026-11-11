@@ -15,7 +15,7 @@
     {% include "offres/gestion/_tabs.html" %}
 
     <section class="stat-cards stat-cards-3" aria-label="Chiffres clés">
-        <div class="stat-card{% if nb_en_attente %} is-alert{% endif %}"><span>Offres à valider</span><strong>{{ nb_en_attente }}</strong><small>En attente de validation</small></div>
+        <div class="stat-card{% if nb_en_attente %} is-alert{% endif %}"><span>Offres en attente (exception)</span><strong>{{ nb_en_attente }}</strong><small>Ancien statut à traiter</small></div>
         <div class="stat-card"><span>Offres publiées</span><strong>{{ nb_publiees }}</strong><small>Visibles par les candidats</small></div>
         <div class="stat-card"><span>Entreprises</span><strong>{{ nb_entreprises }}</strong><small>Comptes entreprise</small></div>
         <div class="stat-card"><span>Candidats</span><strong>{{ nb_candidats }}</strong><small>Comptes étudiants</small></div>
@@ -23,7 +23,7 @@
         <div class="stat-card"><span>Comptes</span><strong>{{ nb_comptes }}</strong><small>Tous profils confondus</small></div>
     </section>
 
-    <h2 class="section-title" style="margin-bottom:18px">Offres à valider</h2>
+    <h2 class="section-title" style="margin-bottom:18px">Offres en attente exceptionnelle</h2>
 
     {% if offres_a_valider %}
     <div class="table-wrap">
@@ -42,7 +42,7 @@
                             <form method="post" action="{% url 'gestion_offre_action' offre.id 'valider' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="suivant" value="{% url 'gestion_tableau_bord' %}">
-                                <button type="submit" class="btn btn-primary btn-sm">Valider et publier</button>
+                                <button type="submit" class="btn btn-primary btn-sm">Publier l'offre</button>
                             </form>
                             <form method="post" action="{% url 'gestion_offre_action' offre.id 'cloturer' %}" data-confirm="Refuser cette offre ? Elle sera clôturée.">
                                 {% csrf_token %}
@@ -58,7 +58,7 @@
     </div>
     {% if nb_en_attente > 5 %}<p style="margin-top:14px"><a href="{% url 'gestion_offres' %}?statut=en_attente" class="link">Voir les {{ nb_en_attente }} offres en attente →</a></p>{% endif %}
     {% else %}
-    <div class="empty"><h3>Rien à valider</h3><p>Toutes les offres ont été traitées.</p></div>
+    <div class="empty"><h3>Aucune offre en attente</h3><p>Les offres publiées normalement sont visibles immédiatement. Aucun ancien dossier en attente.</p></div>
     {% endif %}
 </main>
 {% endblock %}

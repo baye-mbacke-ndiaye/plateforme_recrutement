@@ -116,16 +116,13 @@ def offre_action(request, offre_id, action):
 
     if action == "valider":
         if offre.statut == "en_attente":
-            offre.statut = "ouverte"
-            offre.save(update_fields=["statut"])
+            offre.publier()
             messages.success(request, f"L'offre « {offre.titre} » est publiée.")
         else:
             messages.info(request, "Cette offre n'est pas en attente de validation.")
 
     elif action == "cloturer":
-        if offre.statut != "fermee":
-            offre.statut = "fermee"
-            offre.save(update_fields=["statut"])
+        if offre.cloturer():
             messages.success(request, f"L'offre « {offre.titre} » est clôturée.")
         else:
             messages.info(request, "Cette offre est déjà clôturée.")

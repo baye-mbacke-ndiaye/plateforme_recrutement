@@ -22,6 +22,7 @@
                         <h3>{{ candidature.etudiant.nom_complet }}</h3>
                         {% if candidature.statut == 'acceptee' %}<span class="badge badge-ok">{{ candidature.get_statut_display }}</span>
                         {% elif candidature.statut == 'refusee' %}<span class="badge badge-danger">{{ candidature.get_statut_display }}</span>
+                        {% elif candidature.statut == 'en_cours' %}<span class="badge badge-info">{{ candidature.get_statut_display }}</span>
                         {% else %}<span class="badge badge-wait">{{ candidature.get_statut_display }}</span>{% endif %}
                     </div>
 
@@ -49,7 +50,7 @@
                         <button type="submit" class="btn btn-dark btn-sm">Enregistrer le statut</button>
 
                         {% if candidature.cv %}
-                            <a href="{{ candidature.cv.url }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Consulter le CV</a>
+                            <a href="{% url 'telecharger_cv_candidature' candidature.id %}" class="btn btn-outline btn-sm">Télécharger le CV</a>
                         {% else %}
                             <span class="muted">Aucun CV fourni</span>
                         {% endif %}

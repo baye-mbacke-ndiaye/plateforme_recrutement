@@ -92,6 +92,11 @@ path(
     views.modifier_statut_candidature,
     name="modifier_statut_candidature"
 ),
+path(
+    "candidature/<int:candidature_id>/cv/",
+    views.telecharger_cv_candidature,
+    name="telecharger_cv_candidature"
+),
 
 
 path(

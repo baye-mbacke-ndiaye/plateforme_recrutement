@@ -83,6 +83,21 @@
             </select>
         </label>
 
+        <label class="search-field">
+            <svg class="icon" aria-hidden="true"><use href="#i-building"/></svg>
+            <select name="secteur" aria-label="Secteur d'activité">
+                <option value="">Tous les secteurs</option>
+                {% for valeur, libelle in secteurs %}
+                    <option value="{{ valeur }}"{% if valeur == secteur %} selected{% endif %}>{{ libelle }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="search-field">
+            <svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>
+            <input type="date" name="avant" value="{{ avant }}" aria-label="Date limite au plus tard le" title="Date limite au plus tard le">
+        </label>
+
         <button type="submit" class="btn btn-primary">Rechercher</button>
     </form>
 

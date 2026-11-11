@@ -8,6 +8,27 @@ from .models import ProfilEtudiant, ProfilEntreprise, Candidature, Offre
 
 User = get_user_model()
 
+REGIONS_SENEGAL = (
+    "Dakar",
+    "Diourbel",
+    "Fatick",
+    "Kaffrine",
+    "Kaolack",
+    "Kédougou",
+    "Kolda",
+    "Louga",
+    "Matam",
+    "Saint-Louis",
+    "Sédhiou",
+    "Tambacounda",
+    "Thiès",
+    "Ziguinchor",
+)
+REGIONS_SENEGAL_CHOICES = (
+    ("", "Sélectionnez une région"),
+    *((region, region) for region in REGIONS_SENEGAL),
+)
+
 
 class InscriptionEtudiantForm(UserCreationForm):
     # Informations personnelles de l'étudiant.
@@ -200,6 +221,15 @@ class ProfilEtudiantForm(forms.ModelForm):
                     "Le CV ne doit pas dépasser 5 Mo."
                 )
 
+            # Vérifie le contenu réel du fichier, pas seulement son extension.
+            position = fichier.tell()
+            signature = fichier.read(5)
+            fichier.seek(position)
+            if signature != b"%PDF-":
+                raise forms.ValidationError(
+                    "Le fichier envoyé n'est pas un véritable document PDF."
+                )
+
         return fichier
 
 
@@ -238,6 +268,15 @@ class CandidatureForm(forms.ModelForm):
             if fichier.size > 5 * 1024 * 1024:
                 raise forms.ValidationError(
                     "Le CV ne doit pas dépasser 5 Mo."
+                )
+
+            # Vérifie le contenu réel du fichier, pas seulement son extension.
+            position = fichier.tell()
+            signature = fichier.read(5)
+            fichier.seek(position)
+            if signature != b"%PDF-":
+                raise forms.ValidationError(
+                    "Le fichier envoyé n'est pas un véritable document PDF."
                 )
 
         return fichier
@@ -349,11 +388,46 @@ class InscriptionEntrepriseForm(UserCreationForm):
         return utilisateur
 
 class OffreForm(forms.ModelForm):
+    region = forms.ChoiceField(
+        choices=REGIONS_SENEGAL_CHOICES,
+        label="Région",
+        required=False,
+    )
+    commune = forms.CharField(
+        label="Ville, commune ou sous-région",
+        max_length=130,
+        required=False,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Ex. Parcelles Assainies, Mbour, Casamance",
+        }),
+        help_text="Saisissez un lieu précis si nécessaire.",
+    )
+    localisation = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     # Permet à l'entreprise de choisir une date limite dans un calendrier.
     date_limite = forms.DateField(
         label="Date limite de candidature",
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lieu_actuel = self.instance.localisation.strip()
+        if self.instance.pk:
+            if " — " in lieu_actuel:
+                region, commune = lieu_actuel.split(" — ", 1)
+                if region in REGIONS_SENEGAL:
+                    self.initial["region"] = region
+                    self.initial["commune"] = commune
+                else:
+                    self.initial["commune"] = lieu_actuel
+            elif lieu_actuel in REGIONS_SENEGAL:
+                self.initial["region"] = lieu_actuel
+            else:
+                self.initial["commune"] = lieu_actuel
 
     class Meta:
         model = Offre
@@ -370,6 +444,9 @@ class OffreForm(forms.ModelForm):
             "type_contrat": "Type de contrat",
             "localisation": "Lieu de travail",
         }
+        help_texts = {
+            "region": "Sélectionnez une région, puis précisez la ville ou la commune si vous le souhaitez.",
+        }
         widgets = {
             "description": forms.Textarea(attrs={
                 "rows": 6,
@@ -384,3 +461,16 @@ class OffreForm(forms.ModelForm):
                 "La date limite doit être aujourd'hui ou une date future."
             )
         return date_limite
+
+    def clean(self):
+        cleaned_data = super().clean()
+        region = cleaned_data.get("region", "")
+        commune = cleaned_data.get("commune", "").strip()
+
+        if not region and not commune:
+            self.add_error("region", "Choisissez une région ou saisissez une ville ou une commune.")
+            return cleaned_data
+
+        localisation = f"{region} — {commune}" if region and commune else region or commune
+        cleaned_data["localisation"] = localisation
+        return cleaned_data

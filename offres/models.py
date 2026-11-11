@@ -1,6 +1,7 @@
 
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 class Offre(models.Model):
@@ -11,9 +12,10 @@ class Offre(models.Model):
         ('alternance', 'Alternance'),
     ]
 
-    # en_attente : envoyée par l'entreprise, à valider par l'administrateur.
-    # ouverte    : publiée et visible par les candidats.
-    # fermee     : clôturée par l'entreprise.
+    # ouverte    : publiée immédiatement et visible par les candidats.
+    # fermee     : clôturée par l'entreprise ou par l'administration.
+    # en_attente : ancien statut conservé pour les données historiques et
+    #              une éventuelle modération exceptionnelle uniquement.
     STATUT_CHOIX = [
         ('en_attente', 'En attente de validation'),
         ('ouverte', 'Publiée'),
@@ -53,16 +55,65 @@ class Offre(models.Model):
     def __str__(self):
         return self.titre
 
+    # ---- Méthodes métier (règles de gestion d'une offre) ----
 
-class ProfilEtudiant(models.Model):
+    def est_publique(self):
+        """Vrai si l'offre est publiée et si sa date limite n'est pas dépassée."""
+        return self.statut == 'ouverte' and self.date_limite >= timezone.localdate()
+
+    def publier(self):
+        """Publie l'offre. Retourne False si elle l'était déjà."""
+        if self.statut == 'ouverte':
+            return False
+        self.statut = 'ouverte'
+        self.save(update_fields=['statut'])
+        return True
+
+    def cloturer(self):
+        """Clôture l'offre. Retourne False si elle l'était déjà."""
+        if self.statut == 'fermee':
+            return False
+        self.statut = 'fermee'
+        self.save(update_fields=['statut'])
+        return True
+
+
+class ProfilBase(models.Model):
+    """Classe abstraite : informations communes aux profils étudiant et entreprise.
+
+    Elle n'a pas de table propre. Chaque classe fille (ProfilEtudiant,
+    ProfilEntreprise) hérite des champs et redéfinit nom_affiche() :
+    c'est le polymorphisme.
+    """
+
+    ROLE = ''
+
+    email = models.EmailField(unique=True)
+    telephone = models.CharField(max_length=20, unique=True)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def role(self):
+        return self.ROLE
+
+    def nom_affiche(self):
+        raise NotImplementedError("Chaque profil doit définir nom_affiche().")
+
+    def __str__(self):
+        return self.nom_affiche()
+
+
+class ProfilEtudiant(ProfilBase):
+    ROLE = 'etudiant'
+
     utilisateur = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='profil_etudiant'
     )
     nom_complet = models.CharField(max_length=150)
-    email = models.EmailField(unique=True)
-    telephone = models.CharField(max_length=20, unique=True)
 
     NIVEAU_CHOIX = [
         ('bac', 'Baccalauréat'),
@@ -107,12 +158,22 @@ class ProfilEtudiant(models.Model):
         verbose_name="CV"
     )
 
-    def __str__(self):
-        return f"Profil de {self.nom_complet}"
+    def nom_affiche(self):
+        return self.nom_complet
+
+    def a_postule(self, offre):
+        """Vrai si l'étudiant a déjà une candidature pour cette offre."""
+        return self.candidatures.filter(offre=offre).exists()
+
+    def peut_postuler(self, offre):
+        """Une candidature est possible si l'offre est publique et sans doublon."""
+        return offre.est_publique() and not self.a_postule(offre)
 
 
 
-class ProfilEntreprise(models.Model):
+class ProfilEntreprise(ProfilBase):
+    ROLE = 'entreprise'
+
     # Liste des 20 secteurs d'activité proposés aux entreprises
     SECTEURS_ACTIVITE = [
         ('informatique', 'Informatique et nouvelles technologies'),
@@ -156,14 +217,9 @@ class ProfilEntreprise(models.Model):
     # Présentation et description des activités de l'entreprise
     description = models.TextField(blank=True)
 
-    # Adresse e-mail professionnelle, obligatoirement unique
-    email = models.EmailField(unique=True)
-
-    # Numéro de téléphone de l'entreprise
-    telephone = models.CharField(max_length=20, unique=True)
 
     # Affiche le nom de l'entreprise dans l'administration Django
-    def __str__(self):
+    def nom_affiche(self):
         return self.nom
 
     
@@ -172,7 +228,8 @@ class ProfilEntreprise(models.Model):
 class Candidature(models.Model):
 
     STATUT_CHOIX = [
-        ('en_attente', 'En attente'),
+        ('en_attente', 'Soumise'),
+        ('en_cours', "En cours d'étude"),
         ('acceptee', 'Acceptée'),
         ('refusee', 'Refusée'),
     ]
@@ -217,6 +274,29 @@ class Candidature(models.Model):
 
     def __str__(self):
         return f"{self.etudiant.nom_complet} - {self.offre.titre}"
+
+    def changer_statut(self, nouveau_statut):
+        """Change le statut et notifie l'étudiant.
+
+        Retourne True si le statut a changé, False s'il était déjà le même.
+        Lève ValueError si le statut n'existe pas.
+        """
+        libelles = dict(self.STATUT_CHOIX)
+        if nouveau_statut not in libelles:
+            raise ValueError(f"Statut invalide : {nouveau_statut}")
+        if self.statut == nouveau_statut:
+            return False
+        self.statut = nouveau_statut
+        self.save(update_fields=['statut'])
+        NotificationCandidature.objects.create(
+            etudiant=self.etudiant,
+            candidature=self,
+            message=(
+                f"Votre candidature pour l'offre « {self.offre.titre} » "
+                f"est maintenant : {libelles[nouveau_statut]}."
+            ),
+        )
+        return True
 
 
 class NotificationCandidature(models.Model):

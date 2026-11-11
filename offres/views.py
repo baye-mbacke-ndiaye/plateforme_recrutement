@@ -2,13 +2,17 @@
 # IMPORTATION DES OUTILS
 # ============================================================
 
+from pathlib import Path
+
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404, FileResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
 # Importer les formulaires utilisés dans les vues.
@@ -40,6 +44,8 @@ def rechercher_offres(request):
     mot_cle = request.GET.get('q', '').strip()
     type_contrat = request.GET.get('type', '').strip()
     localisation = request.GET.get('lieu', '').strip()
+    secteur = request.GET.get('secteur', '').strip()
+    avant = request.GET.get('avant', '').strip()
     voir_tout = request.GET.get('tous') == '1'
 
     # Offres publiées (ouvertes) et non expirées : ce sont les seules visibles.
@@ -70,7 +76,21 @@ def rechercher_offres(request):
     if localisation:
         offres = offres.filter(localisation__iexact=localisation)
 
-    filtre_actif = bool(mot_cle or type_contrat or localisation)
+    # Filtrer par secteur d'activité de l'entreprise.
+    secteurs_valides = dict(ProfilEntreprise.SECTEURS_ACTIVITE)
+    if secteur not in secteurs_valides:
+        secteur = ''
+    if secteur:
+        offres = offres.filter(profil_entreprise__secteur=secteur)
+
+    # Filtrer par date limite : offres qui se terminent au plus tard à cette date.
+    date_avant = parse_date(avant) if avant else None
+    if date_avant:
+        offres = offres.filter(date_limite__lte=date_avant)
+    else:
+        avant = ''
+
+    filtre_actif = bool(mot_cle or type_contrat or localisation or secteur or avant)
 
     offres = offres.order_by('-date_creation')
     total_offres = offres.count()
@@ -97,6 +117,9 @@ def rechercher_offres(request):
             'mot_cle': mot_cle,
             'type_contrat': type_contrat,
             'localisation': localisation,
+            'secteur': secteur,
+            'secteurs': ProfilEntreprise.SECTEURS_ACTIVITE,
+            'avant': avant,
             'types_contrat': Offre.TYPE_CHOIX,
             'localisations': localisations,
             'filtre_actif': filtre_actif,
@@ -116,8 +139,17 @@ def rechercher_offres(request):
 
 def detail_offre(request, offre_id):
 
-    # Récupérer l'offre demandée.
+    # Une offre non publiée ne doit pas être accessible par son URL publique.
+    # Son entreprise propriétaire et le personnel peuvent toutefois la consulter.
     offre = get_object_or_404(Offre, id=offre_id)
+    est_proprietaire = (
+        request.user.is_authenticated
+        and offre.profil_entreprise_id is not None
+        and hasattr(request.user, "profil_entreprise")
+        and request.user.profil_entreprise.pk == offre.profil_entreprise_id
+    )
+    if not offre.est_publique() and not (request.user.is_staff or est_proprietaire):
+        raise Http404("Cette offre n'est pas disponible.")
 
     # Vérifier si l'offre est encore disponible.
     offre_active = (
@@ -367,6 +399,7 @@ def connexion(request):
 # PARTIE 7 : DÉCONNEXION
 # ============================================================
 
+@require_POST
 def deconnexion(request):
 
     # Autoriser la déconnexion uniquement par une requête POST.
@@ -413,10 +446,7 @@ def postuler(request, offre_id):
         return redirect('detail_offre', offre_id=offre.id)
 
     # Empêcher les candidatures en double.
-    deja_postule = Candidature.objects.filter(
-        etudiant=profil,
-        offre=offre
-    ).exists()
+    deja_postule = profil.a_postule(offre)
 
     if deja_postule:
 
@@ -513,8 +543,9 @@ def mes_candidatures(request):
     # Calculer les statistiques des candidatures.
     total_candidatures = candidatures.count()
 
+    # Candidatures encore sans décision : soumises ou en cours d'étude.
     candidatures_attente = candidatures.filter(
-        statut='en_attente'
+        statut__in=['en_attente', 'en_cours']
     ).count()
 
     candidatures_acceptees = candidatures.filter(
@@ -584,8 +615,7 @@ def publier_offre(request):
 
             messages.success(
                 request,
-                "Votre offre a été envoyée. Elle sera visible par les candidats "
-                "dès sa validation par notre équipe."
+                "Votre offre a été publiée avec succès."
             )
 
             return redirect("tableau_bord_entreprise")
@@ -728,12 +758,9 @@ def cloturer_offre(request, offre_id):
     # La clôture se fait uniquement par un formulaire POST.
     if request.method == "POST":
 
-        if offre.statut == "fermee":
+        if not offre.cloturer():
             messages.info(request, "Cette offre est déjà clôturée.")
         else:
-            offre.statut = "fermee"
-            offre.save(update_fields=["statut"])
-
             messages.success(
                 request,
                 f"L'offre « {offre.titre} » a été clôturée."
@@ -791,6 +818,7 @@ def candidatures_offre(request, offre_id):
 # ============================================================
 
 @login_required
+@require_POST
 def modifier_statut_candidature(request, candidature_id):
 
     # Vérifier que l'utilisateur possède un profil entreprise.
@@ -831,25 +859,8 @@ def modifier_statut_candidature(request, candidature_id):
                 offre_id=candidature.offre.id
             )
 
-        # Créer une notification uniquement si le statut change.
-        if candidature.statut != nouveau_statut:
-
-            candidature.statut = nouveau_statut
-            candidature.save()
-
-            # Préparer un message adapté au nouveau statut.
-            message = (
-                f"Votre candidature pour l'offre "
-                f"« {candidature.offre.titre} » est maintenant : "
-                f"{statuts_valides[nouveau_statut]}."
-            )
-
-            # Enregistrer la notification pour l'étudiant concerné.
-            NotificationCandidature.objects.create(
-                etudiant=candidature.etudiant,
-                candidature=candidature,
-                message=message
-            )
+        # La méthode du modèle change le statut et notifie l'étudiant.
+        if candidature.changer_statut(nouveau_statut):
 
             messages.success(
                 request,
@@ -874,6 +885,7 @@ def modifier_statut_candidature(request, candidature_id):
 # ============================================================
 
 @login_required
+@require_POST
 def marquer_notification_lue(request, notification_id):
 
     # Vérifier que l'utilisateur possède un profil étudiant.
@@ -926,3 +938,50 @@ def marquer_notification_entreprise_lue(request, notification_id):
     notification.save(update_fields=["lu"])
 
     return redirect("tableau_bord_entreprise")
+
+# ============================================================
+# TÉLÉCHARGEMENT SÉCURISÉ DES CV
+# ============================================================
+
+@login_required
+def telecharger_cv_candidature(request, candidature_id):
+    # Le CV est réservé au candidat concerné, à son entreprise et au personnel.
+    candidature = get_object_or_404(
+        Candidature.objects.select_related(
+            "etudiant", "offre", "offre__profil_entreprise"
+        ),
+        pk=candidature_id,
+    )
+
+    autorise = request.user.is_staff
+
+    try:
+        profil_etudiant = request.user.profil_etudiant
+    except ProfilEtudiant.DoesNotExist:
+        profil_etudiant = None
+
+    try:
+        profil_entreprise = request.user.profil_entreprise
+    except ProfilEntreprise.DoesNotExist:
+        profil_entreprise = None
+
+    if profil_etudiant and candidature.etudiant_id == profil_etudiant.pk:
+        autorise = True
+
+    if profil_entreprise and candidature.offre.profil_entreprise_id == profil_entreprise.pk:
+        autorise = True
+
+    if not autorise:
+        raise Http404("Ce document n'est pas accessible avec ce compte.")
+
+    if not candidature.cv:
+        raise Http404("Aucun CV n'est associé à cette candidature.")
+
+    nom_fichier = Path(candidature.cv.name).name
+    return FileResponse(
+        candidature.cv.open("rb"),
+        as_attachment=True,
+        filename=nom_fichier,
+        content_type="application/pdf",
+    )
+
