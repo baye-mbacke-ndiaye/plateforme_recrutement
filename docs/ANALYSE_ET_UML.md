@@ -1,8 +1,8 @@
-# Analyse des besoins et modélisation UML — KayJoop
+# Analyse des besoins et modélisation UML — Kaay Job
 
 ## 1. Contexte et objectif
 
-KayJoop est une plateforme web qui met en relation les étudiants à la recherche d'un stage ou d'un emploi et les entreprises qui publient des opportunités. Le personnel administratif assure la gestion et la modération de la plateforme.
+Kaay Job est une plateforme web qui met en relation les étudiants à la recherche d'un stage ou d'un emploi et les entreprises qui publient des opportunités. Le personnel administratif assure la gestion et la modération de la plateforme.
 
 ## 2. Acteurs
 

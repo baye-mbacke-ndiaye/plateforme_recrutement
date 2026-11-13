@@ -1,6 +1,6 @@
-# KayJoop — Plateforme de gestion des stages et des offres d’emploi
+# Kaay Job — Plateforme de gestion des stages et des offres d’emploi
 
-KayJoop met en relation les étudiants et les entreprises pour la publication d’offres d’emploi, de stage et d’alternance, le dépôt de candidatures et le suivi de leur traitement.
+Kaay Job met en relation les étudiants et les entreprises pour la publication d’offres d’emploi, de stage et d’alternance, le dépôt de candidatures et le suivi de leur traitement.
 
 ## 1. Technologies
 
@@ -86,7 +86,7 @@ Les mots de passe ne sont jamais affichés en clair. L'administration intégrée
 ## 6. Documentation
 
 Le dossier de présentation complet (analyse des besoins, règles de gestion, diagrammes UML, sécurité, tests et captures d'écran) est disponible ici :
-[docs/KayJoop_Dossier_de_presentation.pdf](docs/KayJoop_Dossier_de_presentation.pdf)
+[docs/Kaay Job_Dossier_de_presentation.pdf](docs/Kaay Job_Dossier_de_presentation.pdf)
 
 ## 7. Tests
 
@@ -108,7 +108,7 @@ Définir les variables d'environnement suivantes sur l'hébergeur :
 - `DJANGO_SECRET_KEY` : une clé secrète longue et aléatoire ;
 - `DJANGO_DEBUG=False` ;
 - `DJANGO_ALLOWED_HOSTS` : les noms de domaine autorisés, séparés par des virgules ;
-- `DJANGO_CSRF_TRUSTED_ORIGINS` : les origines HTTPS autorisées, séparées par des virgules, par exemple `https://kayjoop.example.com`.
+- `DJANGO_CSRF_TRUSTED_ORIGINS` : les origines HTTPS autorisées, séparées par des virgules, par exemple `https://kaayjob.example.com`.
 
 Avant la mise en ligne :
 

@@ -1,4 +1,4 @@
-# Plan de soutenance — KayJoop (10 à 15 minutes)
+# Plan de soutenance — Kaay Job (10 à 15 minutes)
 
 ## 1. Introduction et contexte — 1 minute
 Présenter le problème : les étudiants ont besoin de trouver des stages et des emplois, tandis que les entreprises ont besoin de diffuser leurs offres et de suivre les candidatures.
@@ -26,7 +26,7 @@ Présenter Python, Django, l'ORM, SQLite, les templates HTML, CSS et JavaScript.
 Indiquer les tests automatisés exécutés, les permissions par rôle, la protection des CV et les contrôles de candidature. Préciser que le déploiement nécessite les variables d'environnement et un hébergement configuré.
 
 ## 7. Conclusion — 1 minute
-Résumer la valeur de KayJoop et les évolutions possibles : PostgreSQL, hébergement, notifications par e-mail, export PDF et filtres avancés.
+Résumer la valeur de Kaay Job et les évolutions possibles : PostgreSQL, hébergement, notifications par e-mail, export PDF et filtres avancés.
 
 ## Conseils
 - Utiliser des comptes et des données de démonstration.

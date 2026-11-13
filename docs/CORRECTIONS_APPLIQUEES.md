@@ -1,4 +1,4 @@
-# Corrections apportées à KayJoop
+# Corrections apportées à Kaay Job
 
 ## Fonctionnement et sécurité
 

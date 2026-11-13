@@ -1,4 +1,4 @@
-# Plan de test et vérification — KayJoop
+# Plan de test et vérification — Kaay Job
 
 À exécuter sur une base de test avec des comptes fictifs. Ne pas utiliser de vrais CV dans les captures de démonstration.
 

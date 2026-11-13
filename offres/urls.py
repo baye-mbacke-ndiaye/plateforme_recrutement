@@ -6,7 +6,7 @@ from django.urls import path
 from . import views, views_gestion
 
 
-# Déclare les adresses des pages de KayJoop.
+# Déclare les adresses des pages de Kaay Job.
 urlpatterns = [
     # Administration intégrée au site (réservée au personnel).
     path('gestion/', views_gestion.tableau_bord, name='gestion_tableau_bord'),

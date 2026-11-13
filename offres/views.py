@@ -380,7 +380,7 @@ def connexion(request):
 
             messages.warning(
                 request,
-                "Aucun profil KayJoop n'est associé à ce compte."
+                "Aucun profil Kaay Job n'est associé à ce compte."
             )
 
             return redirect('rechercher_offres')

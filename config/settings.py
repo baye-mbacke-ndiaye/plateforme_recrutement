@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get(
 # DEBUG reste actif en local, mais peut être désactivé sans modifier le code.
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
 
-# Exemple : DJANGO_ALLOWED_HOSTS=kayjoop.example.com,www.kayjoop.example.com
+# Exemple : DJANGO_ALLOWED_HOSTS=kaayjob.example.com,www.kaayjob.example.com
 ALLOWED_HOSTS = [
     h.strip()
     for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")

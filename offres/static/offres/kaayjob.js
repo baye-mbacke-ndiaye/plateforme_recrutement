@@ -1,4 +1,4 @@
-/* KayJoop — scripts du site (un seul fichier) */
+/* Kaay Job — scripts du site (un seul fichier) */
 document.addEventListener("DOMContentLoaded", () => {
 
     /* Menu mobile */
